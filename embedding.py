@@ -1,9 +1,7 @@
 import requests
 
 
-def embed(
-    texts: list[str], task: str = "retrieval.passage" | "retrieval.query"
-) -> list[list[float]]:
+def embed(texts: list[str], task: str = "retrieval.passage") -> list[list[float]]:
 
     result = requests.post(
         url="https://api.jina.ai/v1/embeddings",
@@ -15,7 +13,8 @@ def embed(
             "dimensions": 512,
         },
     ).json()
-
+    if result["data"][0] is not list:
+        embeddings = result["data"][0]
     embeddings = [item["embedding"] for item in result["data"]]
 
     return embeddings

@@ -1,91 +1,43 @@
-Here's exactly where you stand right now:
+THE LAST LIGHTHOUSE KEEPER OF VELLARIN POINT
 
-```
-OFFLINE PIPELINE
-─────────────────────────────────────────
-✅ chunk it        split_into_chunks.py
-✅ embed it        embeddings.py
-❌ load the doc    
-❌ save to storage 
+The lighthouse at Vellarin Point had not gone dark in one hundred and forty-three years, and Mira Oskana intended to keep it that way for one more night, even though the automated system had failed at dusk and the replacement part wouldn't arrive until the ferry came back on Thursday.
 
-ONLINE PIPELINE
-─────────────────────────────────────────
-✅ cosine search   cosine_similarity.py
-❌ embed the query
-❌ retrieve top K
-❌ build the prompt
-❌ call the LLM
-❌ the main loop   
-```
+She climbed the two hundred and twelve steps the old way, with an oil lamp in one hand and her grandmother's logbook tucked under her arm, the same logbook that had recorded every storm, every wreck, every strange light on the water since 1881. The stairs groaned under her boots. Outside, the wind was already beginning to argue with itself, the way it did before a real blow came in off the strait.
 
----
+Her grandmother used to say that a lighthouse wasn't a machine, it was a promise, and promises didn't run on batteries.
 
-## 🔷 Your Build Order From Here
+Mira reached the lamp room just as the last grey light bled out of the sky. Below her, the sea had turned the color of hammered iron, restless and enormous, stretching out toward Kestrel Reef where eleven ships had gone down before the light was ever built. She set the oil lamp on the iron table and began the ritual she had only ever watched her grandmother perform: trimming the wick, checking the reservoir, polishing the great lens with a chamois cloth until the brass fittings threw back gold.
 
-### Build these next, in this order:
+The automated beacon sat dead in its housing, a smug little cylinder of plastic and glass that had replaced the old Fresnel lens forty years ago. Mira had never much liked it. It did its job, she supposed, but it did it the way a vending machine dispenses soda — competently, joylessly, without any sense that it mattered.
 
-| Step | File | What it does | Difficulty |
-|---|---|---|---|
-| **1** | `loader.py` | Read a `.txt` or `.pdf` into a plain string | ⭐ Easiest |
-| **2** | `storage.py` | Save and load `{text, vector}` pairs to a JSON file | ⭐ Easy |
-| **3** | `ingest.py` | Wire loader → chunker → embedder → storage together | ⭐ Easy |
-| **4** | `retriever.py` | Embed query, run cosine on all stored vectors, return top K chunks | ⭐⭐ Medium |
-| **5** | `prompt_builder.py` | Take top K chunks, format them into a prompt string | ⭐ Easy |
-| **6** | `llm.py` | Call an LLM API with the prompt, return the answer | ⭐ Easy |
-| **7** | `main.py` | The agent loop — take user input, wire everything, print answer | ⭐⭐ Medium |
+She lit the old lamp instead.
 
----
+The flame caught, small and orange, then swelled as she adjusted the wick. She turned the crank that rotated the lens housing, and the mechanism, unused in decades but kept oiled out of some stubborn family sentimentality, groaned once and then began to turn, smooth as a held breath. The light swept out over the water in its old rhythm: two seconds on, three seconds dark, the signature of Vellarin Point that had been unchanged since her great-great-grandfather first lit this lamp.
 
-## 🔷 Visually, What You're Building
+By eight o'clock the storm had arrived in earnest. Rain came sideways, hammering the windows of the lamp room like something trying to get in. Mira sat wrapped in her grandmother's wool coat, feeding the lamp, watching the beam cut its slow circles through the dark, and thinking about the entry she'd read in the logbook on her way up.
 
-```
-YOUR FINAL FILE STRUCTURE:
-───────────────────────────────────────
-rag/
-├── loader.py             ← read raw doc into string
-├── split_into_chunks.py  ✅ done
-├── embeddings.py         ✅ done
-├── storage.py            ← save/load JSON vector store
-├── cosine_similarity.py  ✅ done
-├── ingest.py             ← offline pipeline wired together
-├── retriever.py          ← online search step
-├── prompt_builder.py     ← build the prompt string
-├── llm.py                ← call the LLM
-└── main.py               ← the agent loop
-```
+October 14th, 1962. Worst storm in a decade. Fishing boat Amaryllis lost engine power four miles out, drifting toward the reef. Kept the light burning through the night though the wind near tore the tower apart. At dawn the Amaryllis limped in past the point, all six hands alive. The captain later said he'd been ready to give up until he saw the light hold steady when everything else in the world seemed to be falling apart. Sometimes I think that's the whole job. Not to guide anyone anywhere. Just to prove that something can hold steady.
 
----
+Mira thought about that line for a long time. Just to prove that something can hold steady.
 
-## 🔷 What Each One Does In One Sentence
+Around midnight, between one slow rotation of the lamp and the next, she saw it: a single red running light, low on the water, well inside the reef line where no vessel should have been in weather like this. She grabbed the old brass telescope from its hook and found the boat — a small trawler, maybe thirty feet, listing hard, taking water over the bow.
 
-**`loader.py`**
-Opens a file, reads the text, returns a single string. Nothing more.
+She didn't have a radio up here; the modern equipment was all downstairs in the keeper's cottage, unpowered along with everything else. So she did the only thing she could do. She kept the lamp burning, kept the rotation steady, and she watched.
 
-**`storage.py`**
-Two functions only — `save(chunks_with_vectors)` writes to JSON, `load()` reads it back.
+The trawler's own light bobbed and wavered, clearly fighting the swell, clearly taking on water, but it did not go under. Twice it seemed to vanish behind a wave and Mira's stomach dropped both times, and both times the light reappeared, closer to the safe channel, as if the boat's captain had used her beam to correct course when he could see nothing else.
 
-**`ingest.py`**
-Calls loader → chunker → embedder → storage in sequence. This is your offline pipeline. You run this **once** before anything else.
+It took forty minutes for the trawler to work its way around the reef and into the calmer water of the bay. Mira didn't move from the window the entire time. When the boat's light finally slipped behind the headland into the safety of the harbor, she found she'd been holding her breath for so long that her chest ached when she let it go.
 
-**`retriever.py`**
-Takes a user query string, embeds it, loops through all stored vectors, runs cosine similarity on each, returns the top K chunk texts.
+She didn't know, that night, whether the boat's captain had needed her light or would have found his own way regardless. She never got proof, not really — no radio call, no letter, no visitor at the base of the tower to say thank you for keeping the flame lit on the night the automated system failed. Maybe he'd had his own instruments. Maybe the old lamp had made no difference at all.
 
-**`prompt_builder.py`**
-Takes a list of chunk texts and a query, returns a formatted prompt string ready to send to an LLM.
+But she thought about her grandmother's words, written sixty years earlier in a hand that had gone shaky with age by the final entries: not to guide anyone anywhere, just to prove that something can hold steady.
 
-**`llm.py`**
-Takes a prompt string, calls any LLM API, returns the response text.
+By morning the storm had blown itself out into a hard, clean wind and a sky scrubbed pale blue. Mira let the lamp finally gutter out as the sun rose properly over the water, and she climbed down the two hundred and twelve steps with the empty oil can in one hand and the logbook under her arm, already composing the entry she would write.
 
-**`main.py`**
-```
-while True:
-    query = input("Ask something: ")
-    → retrieve
-    → build prompt
-    → call LLM
-    → print answer
-```
+June 3rd. Automated beacon failed at dusk. Burned the old lamp through the night. Trawler in distress off the reef made it safely to harbor around 12:40 AM. Cannot say for certain the light made the difference. But it was there. It held. That has to count for something.
 
----
+She set the logbook down on the cottage table, put the kettle on, and looked out the window at the lighthouse standing white and ordinary against the morning sky, giving no sign at all of the small, stubborn miracle it had performed the night before.
 
-Which one do you want to tackle first? I'd say start with **`loader.py`** — it's the easiest win and it connects directly to what you already have.
+The ferry arrived Thursday with the replacement part, a little grey box no bigger than a paperback book, and the technician had it installed within the hour. The automated light clicked on that evening right on schedule, doing its job, as it always did, without ceremony.
+
+But Mira kept the oil lamp cleaned and filled after that, sitting ready on the iron table in the lamp room, the wick trimmed, waiting. Just in case. Some promises, she had come to understand, were worth keeping even after the world stopped requiring them of you.
