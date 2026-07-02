@@ -1,0 +1,91 @@
+Here's exactly where you stand right now:
+
+```
+OFFLINE PIPELINE
+─────────────────────────────────────────
+✅ chunk it        split_into_chunks.py
+✅ embed it        embeddings.py
+❌ load the doc    
+❌ save to storage 
+
+ONLINE PIPELINE
+─────────────────────────────────────────
+✅ cosine search   cosine_similarity.py
+❌ embed the query
+❌ retrieve top K
+❌ build the prompt
+❌ call the LLM
+❌ the main loop   
+```
+
+---
+
+## 🔷 Your Build Order From Here
+
+### Build these next, in this order:
+
+| Step | File | What it does | Difficulty |
+|---|---|---|---|
+| **1** | `loader.py` | Read a `.txt` or `.pdf` into a plain string | ⭐ Easiest |
+| **2** | `storage.py` | Save and load `{text, vector}` pairs to a JSON file | ⭐ Easy |
+| **3** | `ingest.py` | Wire loader → chunker → embedder → storage together | ⭐ Easy |
+| **4** | `retriever.py` | Embed query, run cosine on all stored vectors, return top K chunks | ⭐⭐ Medium |
+| **5** | `prompt_builder.py` | Take top K chunks, format them into a prompt string | ⭐ Easy |
+| **6** | `llm.py` | Call an LLM API with the prompt, return the answer | ⭐ Easy |
+| **7** | `main.py` | The agent loop — take user input, wire everything, print answer | ⭐⭐ Medium |
+
+---
+
+## 🔷 Visually, What You're Building
+
+```
+YOUR FINAL FILE STRUCTURE:
+───────────────────────────────────────
+rag/
+├── loader.py             ← read raw doc into string
+├── split_into_chunks.py  ✅ done
+├── embeddings.py         ✅ done
+├── storage.py            ← save/load JSON vector store
+├── cosine_similarity.py  ✅ done
+├── ingest.py             ← offline pipeline wired together
+├── retriever.py          ← online search step
+├── prompt_builder.py     ← build the prompt string
+├── llm.py                ← call the LLM
+└── main.py               ← the agent loop
+```
+
+---
+
+## 🔷 What Each One Does In One Sentence
+
+**`loader.py`**
+Opens a file, reads the text, returns a single string. Nothing more.
+
+**`storage.py`**
+Two functions only — `save(chunks_with_vectors)` writes to JSON, `load()` reads it back.
+
+**`ingest.py`**
+Calls loader → chunker → embedder → storage in sequence. This is your offline pipeline. You run this **once** before anything else.
+
+**`retriever.py`**
+Takes a user query string, embeds it, loops through all stored vectors, runs cosine similarity on each, returns the top K chunk texts.
+
+**`prompt_builder.py`**
+Takes a list of chunk texts and a query, returns a formatted prompt string ready to send to an LLM.
+
+**`llm.py`**
+Takes a prompt string, calls any LLM API, returns the response text.
+
+**`main.py`**
+```
+while True:
+    query = input("Ask something: ")
+    → retrieve
+    → build prompt
+    → call LLM
+    → print answer
+```
+
+---
+
+Which one do you want to tackle first? I'd say start with **`loader.py`** — it's the easiest win and it connects directly to what you already have.

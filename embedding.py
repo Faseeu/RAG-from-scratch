@@ -1,7 +1,9 @@
 import requests
 
 
-def embed(texts: list[str], task: str) -> list[list[float]]:
+def embed(
+    texts: list[str], task: str = "retrieval.passage" | "retrieval.query"
+) -> list[list[float]]:
 
     result = requests.post(
         url="https://api.jina.ai/v1/embeddings",
