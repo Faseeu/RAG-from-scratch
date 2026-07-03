@@ -3,4 +3,61 @@
 __pycache__
 .env
 .python
-.vscode
+.vscode/
+# ===========================
+# SECRETS — never commit these
+# ===========================
+.env
+.env.*
+*.env
+
+# ===========================
+# PYTHON
+# ===========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# ===========================
+# DATA / VECTOR STORE
+# ===========================
+*.json          # remove this line if you want to commit other JSONs
+RAG.json        # or be specific, just ignore your vector store
+
+# ===========================
+# VSCODIUM / VSCODE
+# ===========================
+.vscode/
+.vscodium/
+*.code-workspace
+
+# ===========================
+# OS GARBAGE
+# ===========================
+# mac
+.DS_Store
+.AppleDouble
+
+# windows
+Thumbs.db
+desktop.ini
+
+# linux
+*~
+
+# ===========================
+# LOGS / MISC
+# ===========================
+*.log
+*.tmp
+*.swp
+
+RAG.json

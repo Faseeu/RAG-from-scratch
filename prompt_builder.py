@@ -4,7 +4,7 @@ def prompt_builder(query, chunks):
     Don't make things up
     If the answer isn't there, say so"""
     rag = "\n\n".join(chunks)
-    
+
     prompt = f"""
     You are a helpful assistant.
     Answer the user's question using ONLY the context provided below.
@@ -15,7 +15,7 @@ def prompt_builder(query, chunks):
     --- CONTEXT ---
     {rag}
     --- END CONTEXT ---
-    SER QUESTION:
+    USER QUESTION:
     {query}
 
     ANSWER:               

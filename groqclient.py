@@ -1,5 +1,12 @@
 from groq import Groq
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # reads .env file and loads all variables
+
+API_KEY = os.getenv("GROQ_API_KEY")
+
 
 class GroqClient:
     def __init__(self, model: str, max_tokens: int = 1000):

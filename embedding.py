@@ -1,5 +1,12 @@
 import requests
 
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # reads .env file and loads all variables
+
+API_KEY = os.getenv("JINA_API_KEY")
+
 
 def embed(texts: list[str], task: str = "retrieval.passage") -> list[list[float]]:
 
