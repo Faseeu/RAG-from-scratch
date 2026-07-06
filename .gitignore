@@ -61,3 +61,4 @@ desktop.ini
 *.swp
 
 RAG.json
+conversation_memory.json
