@@ -36,7 +36,7 @@ def bm25_search(
     scores_sort = sorted(score_list, key=lambda x: x["score"], reverse=True)
     # pprint(scores_sort[:3])
     top_scores = [score["chunk"] for score in scores_sort[:top_k]]
-    print(top_scores)
+    # print(top_scores)
     return top_scores
 
 
@@ -54,7 +54,7 @@ def tokenize(textlist: list[str]):
     tokenized = [[x for x in sublist if x != ""] for sublist in tokenized]
     # pprint(tokenized)
     return tokenized
-# i think we apply some kind of mathematical formula
+
 
 def remove_puncutation(text):
     results = text
@@ -66,6 +66,6 @@ def remove_puncutation(text):
     return results
 
 
-bm25_search()
+# bm25_search()
 # pprint(bm25_search())
 # print(string.punctuation + "\\n")

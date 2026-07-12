@@ -3,6 +3,8 @@ from ingest import ingest
 from groqclient import GroqClient
 from prompt_builder import prompt_builder
 from memory import conMemory
+from bm25_search import bm25_search
+from rrf_merge import rrf_merge
 
 
 def main():
@@ -20,8 +22,10 @@ def main():
         query: str = input("Enter your QUERY: \n")
         if query == "q" or query == "e" or query == "quit" or query == "exit":
             break
-
-        top_chunks = retriever(query)
+        # HYBRID SEARCH
+        vector_chunks = retriever(query)
+        word_chunks = bm25_search(query)
+        top_chunks = rrf_merge(vector_chunks, word_chunks)
         print(top_chunks)
 
         if turn != 1:
