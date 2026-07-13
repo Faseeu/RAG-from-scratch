@@ -534,45 +534,68 @@ retrieved chunks were thematically correct and excluded irrelevant
 plot/logistics chunks.
 
 
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHERE WE ARE NOW AND WHAT TO DO NEXT
+WHERE WE ARE RIGHT NOW / IMMEDIATE NEXT STEP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-V0 is 100% complete and working.
+V1 HYBRID SEARCH IS FULLY BUILT AND WIRED:
+  bm25_search.py    ✅ done
+  rrf_merge.py       ✅ done
+  reranker.py        ✅ done (BONUS — built ahead of plan, using 
+                       sentence-transformers CrossEncoder 
+                       "cross-encoder/ms-marco-MiniLM-L-6-v2", 
+                       NOT Jina reranker as originally planned — 
+                       he changed his mind mid-project and it 
+                       worked fine this time)
+  main.py            ✅ fully wired: retriever + bm25_search → 
+                       rrf_merge → rerank → prompt_builder → llm
 
-The developer needs to choose a V1 upgrade. Present the three 
-options clearly and let them choose. Then guide them through 
-building it the same way as V0 — concept first, they write 
-the code, you review and debug.
+ALSO BUILT ON HIS OWN ( added himself 
+without asking first — confirmed working, he understands it):
+  memory.py — conMemory() function, rolling-window conversation 
+    memory stored in a JSON file, capped length (not unlimited), 
+    injected into prompt_builder each turn
 
-V1 OPTIONS:
+ARCHITECTURE CHANGES HE MADE UNILATERALLY (confirmed intentional, 
+not bugs — he explicitly said "I can make changes on my own"):
+  - prompt_builder(query, chunks, memory) now takes 3 args and 
+    returns ONE combined string (not the original tuple of 
+    system_prompt/user_prompt)
+  - GroqClient.generate(prompt) now takes ONE argument instead of 
+    the original two (system_prompt, user_prompt)
+  - Renamed llm.py → groqclient.py
 
-A — RE-RANKING (best quality improvement)
-  After cosine retrieval returns top K, pass each chunk through 
-  a cross-encoder model that reads BOTH the query and chunk 
-  together (full attention) and gives a better relevance score.
-  Retrieve top 20, re-rank to top 3.
-  New file needed: reranker.py
-  Library: sentence-transformers (cross-encoder models)
-  Effort: low — it's a post-retrieval filter step
+V1 IS FUNCTIONALLY COMPLETE. NEXT STEP IS TESTING, NOT BUILDING:
+  Run the full pipeline end-to-end on the lighthouse test document 
+  with several real questions. Compare vector-only vs BM25-only vs 
+  hybrid vs hybrid+reranked results manually. No new file needed for 
+  this — just running main.py and observing output at each stage.
 
-B — HYBRID SEARCH (best retrieval improvement)
-  Run two searches in parallel:
-    1. Vector search (current cosine similarity approach)
-    2. BM25 keyword search (exact term matching)
-  Merge results with Reciprocal Rank Fusion (RRF)
-  New files needed: bm25_search.py, rrf_merge.py
-  Library: rank_bm25
-  Effort: medium
+AFTER TESTING IS DONE, HE IS READY TO START V2 (query rewriting / 
+query expansion / RAG-Fusion / sub-query decomposition) IN this NEW CHAT.
 
-C — CONVERSATION MEMORY (easiest, most satisfying)
-  Store Q&A pairs in a list as the conversation grows
-  Inject the last N turns into every prompt
-  The LLM can now understand follow-up questions
-  Changes needed: modify main.py and prompt_builder.py
-  No new files strictly required
-  Effort: low
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RERANKING — BUILT AHEAD OF SCHEDULE THIS SESSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+He originally deferred reranking (said sentence-transformers "sucks" 
+and planned to revisit with Jina reranker later) — but ended up 
+building it anyway this same session using sentence-transformers' 
+CrossEncoder after all, and it worked fine. Notable: he was handed 
+partial premade code (just the model loading + a commented-out 
+predict line) and CORRECTLY identified he could write everything 
+after that himself, reusing his own established score→pair→sort→
+slice pattern from bm25_search.py and rrf_merge.py. He explicitly 
+noticed the repetition himself ("done the same sorting and scoring 
+3 times before") — this is a genuine sign of pattern internalization, 
+worth reinforcing if he notices it again.
+
+Function: rerank(query: str, chunks: list[str], top_k: int = 5) 
+  -> list[str]
+  Builds [query, chunk] pairs, model.predict(pairs) → list[float] 
+  scores, zips into list[dict], sorts descending by score, slices 
+  top_k, returns chunk texts only.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 TONE AND STYLE REMINDERS
@@ -625,6 +648,6 @@ INTERESTING THINGS ABOUT HIM (useful for future sessions)
 
 
 ═══════════════════════════════════════════════════════════════
-END OF CONTEXT — ASK WHICH V1 UPGRADE THEY WANT TO BUILD
+END OF CONTEXT — ASK WHICH V2 UPGRADE THEY WANT TO BUILD
 ═══════════════════════════════════════════════════════════════
 

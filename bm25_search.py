@@ -7,7 +7,7 @@ from pprint import pprint
 
 
 def bm25_search(
-    query="meaning of goldilocks\n><?!", top_k: int = 5, filename="RAG.json"
+    query="meaning of goldilocks\n><?!", top_k: int = 15, filename="RAG.json"
 ):
     data = load(filename)  # Gives the dict of the VecterDB(here it is 'RAG.json')
 

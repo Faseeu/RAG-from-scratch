@@ -1,6 +1,8 @@
 from storage import load, store
 
+from ingest import ingest
 
+ingest()
 data = load()
 for i, vector in enumerate(data):
     chunk = vector["chunk"]

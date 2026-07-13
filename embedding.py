@@ -20,6 +20,7 @@ def embed(texts: list[str], task: str = "retrieval.passage") -> list[list[float]
             "dimensions": 512,
         },
     ).json()
+    # print(result)
     if result["data"][0] is not list:
         embeddings = result["data"][0]
     embeddings = [item["embedding"] for item in result["data"]]

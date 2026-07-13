@@ -5,6 +5,7 @@ from prompt_builder import prompt_builder
 from memory import conMemory
 from bm25_search import bm25_search
 from rrf_merge import rrf_merge
+from reranker import rerank
 
 
 def main():
@@ -26,7 +27,8 @@ def main():
         vector_chunks = retriever(query)
         word_chunks = bm25_search(query)
         top_chunks = rrf_merge(vector_chunks, word_chunks)
-        print(top_chunks)
+        # print(top_chunks)
+        top_chunks=rerank(query, top_chunks)
 
         if turn != 1:
             memory = conMemory("load")

@@ -3,7 +3,7 @@ from embedding import embed
 from cosine_similarity import cosine_similarity
 
 
-def retriever(query, top_k: int = 3):
+def retriever(query, top_k: int = 15):
     chunks = load()
 
     query_embed = embed([query], "retrieval.query")[0]
