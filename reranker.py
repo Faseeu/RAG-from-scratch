@@ -9,7 +9,7 @@ load_dotenv()
 token = os.getenv("HF_TOKEN")
 
 
-model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2",token=token)
+model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", token=token)
 
 
 # scores = model.predict(pairs)  # returns a list of floats, one score per pair
