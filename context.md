@@ -279,61 +279,43 @@ retriever.py
 
 ---
 
-bm25_search.py (NEW FILE — BUILT THIS SESSION, V1)
-  - keyword/exact-match search using rank_bm25's BM25Okapi
-  - function: bm25_search(query: str, top_k: int = 5, 
-    filename: str = "RAG.json") → list[str]
-  - pipeline: load RAG.json → extract "chunk" texts → tokenize all 
-    chunks → tokenize query → BM25Okapi(tokenized_corpus).get_scores() 
-    → zip scores with chunks into list[dict] → sort by score descending 
-    → slice top_k → return list of chunk texts only (not dicts)
-  - Helper: tokenize(textlist: list[str]) → list[list[str]]
-    lowercases, splits on whitespace (.split() not .split(" ") — 
-    the space-only version leaves \n stuck to words), removes 
-    punctuation via remove_puncutation(), then filters out any 
-    empty-string tokens left behind after punctuation stripping
-    (nested list comprehension: 
-    [[x for x in sublist if x != ""] for sublist in tokenized])
-  - Helper: remove_puncutation(text) → loops over string.punctuation, 
-    replaces each char with "" across all strings in the list
-  - Helper: score(tk_corpus, tk_query) → wraps BM25Okapi + get_scores()
+bm25_search.py — REFACTORED THIS SESSION (V2 cleanup, memoization pattern)
+  - PROBLEM FOUND: original score() rebuilt BM25Okapi(tk_corpus) on 
+    EVERY query — i.e. rebuilt the entire index (IDF + avg length 
+    calculations across whole corpus) every single call, even though 
+    the corpus never changes between queries. Same category as 
+    loading vector store inside while loop — expensive "build" step 
+    glued to cheap "query" step.
+  - CONCEPT TAUGHT: memoization (cache output for a given input) 
+    doesn't literally apply here (tk_query changes every call, 
+    tk_corpus is unhashable as dict key) — the real fix is the 
+    "build once in __init__, reuse via self" pattern, same shape as 
+    GroqClient's self.client = Groq().
+  - FIX: converted to a class `BM25`
+    __init__(self, filename="RAG.json") loads data, tokenizes corpus, 
+    builds self.bm25 = BM25Okapi(self.tk_corpus) ONCE
+    bm25_search(self, query, top_k, filename) — per-query search, 
+    reuses self.bm25 and self.corpus, no rebuilding
+    score(self, tk_query) — thin wrapper around self.bm25.get_scores()
+    tokenize(self, textlist) and remove_puncutation(self, text) — 
+    now proper instance methods
+  - BUGS HE HAD DURING REFACTOR (found via trace, self-corrected):
+    1. bm25_search() referenced `data` and `corpus` as if still local 
+       vars from the old function version — but never redefined them 
+       inside the method after moving corpus-loading into __init__. 
+       NameError. Fix: use self.corpus instead.
+    2. Called self.score(self.tk_corpus, tk_query) — two args — but 
+       score(self, tk_query) only accepts one (self.bm25 already 
+       holds the corpus internally now). Arg count mismatch.
+    3. remove_puncutation(text) defined WITHOUT self as first param, 
+       but called as self.remove_puncutation(text) — bound method 
+       call auto-injects self as the first positional slot, so the 
+       parameter named `text` was silently receiving the BM25 
+       instance object instead of the actual text. Fixed by adding 
+       self as the first parameter.
+  - RESULT: confirmed working, BM25 search now loads/scores in 
+    under a second, no repeated index rebuilding.
 
-  BUGS HE HAD AND FIXED (this file took MANY iterations — good 
-  persistence, real debugging reps):
-  - filename=RAG.json (no quotes) → NameError, fixed to "RAG.json"
-  - missing top_k param entirely → added it
-  - text.split(" ").lower() → AttributeError, list has no .lower(); 
-    fixed order to .lower().split()
-  - for char in string.punctuation and "\n" → `and` between two 
-    truthy values evaluates to just the SECOND value ("\n"), so loop 
-    only ever stripped newlines, not real punctuation. Same bug 
-    family as `0 | 0.0` from cosine_similarity.py — wrong operator 
-    used between VALUES. Fixed to just `string.punctuation`.
-  - embed()-style unpacking bug reappeared: passed tokenize(query) 
-    (nested list) into BM25 scoring without [0] unpack → fixed to 
-    tokenize([query])[0]
-  - score_dict built with `{...}` (set of dicts) → TypeError 
-    unhashable dict. Fixed to `[...]` list comprehension.
-  - sorted(score_dict, lambda x: x[0], reverse=True) → two bugs: 
-    (a) missing `key=` keyword, sort func can't be positional, 
-    (b) x[0] tried to index a dict by position instead of by key 
-    name. Fixed to sorted(score_list, key=lambda x: x["score"], 
-    reverse=True)
-  - return {score_dict[top] for top in top_scores} → set instead of 
-    list, and indexing logic broken; eventually simplified correctly 
-    to [score["chunk"] for score in scores_sort[:top_k]]
-  - Briefly tried "".join(...) for the return value — WRONG, mashes 
-    all chunks into one unspaced string, breaks -> list[str] contract 
-    that prompt_builder.py depends on. Corrected back to a list 
-    comprehension.
-  - Self-caught bug via his own adversarial test input 
-    ("...goldilocks\n><?!"): punctuation stripping could leave behind 
-    empty-string "" tokens, which would pollute BM25's IDF math as 
-    fake vocabulary. Fixed via the empty-token filter mentioned above.
-
-  STATUS: bm25_search.py is now considered CORRECT and matches the 
-  same load → prep → score → sort → slice → return shape as 
-  retriever.py.
 ___
 prompt_builder.py
   - formats the final prompt for the LLM
@@ -352,18 +334,70 @@ prompt_builder.py
 
 ---
 
-llm.py
-  - GroqClient class, best written file in the project, zero bugs
-  - __init__(self, model: str, max_tokens: int = 1000)
-    sets self.client = Groq(), self.model, self.max_tokens
-  - generate(self, system_prompt: str, user_prompt: str) → str
-    calls self.client.chat.completions.create()
-    messages = [{"role":"system",...}, {"role":"user",...}]
-    returns response.choices[0].message.content
-    has try/except that returns error message string on failure
-  - uses groq Python library (pip install groq)
-  - Groq() auto-reads GROQ_API_KEY from environment
-  - recommended model: "llama-3.3-70b-versatile"
+groqclient.py (renamed from llm.py) — UPDATED THIS SESSION (V2, 
+structured output support added)
+  - GroqClient class: __init__(self, model, max_tokens=1000, 
+    output_schema=None) — added output_schema param, stored as self.schema
+  - generate(self, user_prompt) -> str | dict depending on schema 
+    (flagged as a design smell — see below)
+  - BUG 1 (crash): passing a Pydantic schema straight into Groq's 
+    response_format via schema.model_json_schema() failed with 
+    "additionalProperties:false must be set on every object" — 
+    Groq's strict JSON schema mode requires that flag on every 
+    object node in the schema tree; Pydantic doesn't emit it unless 
+    told to. FIX: added `model_config = ConfigDict(extra="forbid")` 
+    to the Pydantic model (QueryStructures) — this both (a) rejects 
+    unknown fields at runtime AND (b) makes model_json_schema() emit 
+    additionalProperties:false. Confirmed by printing the schema 
+    before/after.
+  - BUG 2 (logic, no crash but silently wrong before fix): original 
+    code had `if self.schema is not None: response = ...create(...)` 
+    with NO else, followed by an unconditional second 
+    ...create(...) call below it — meaning the schema branch never 
+    actually got skipped, both paths ran the second call regardless. 
+    FIXED by adding proper else block — now each branch is mutually 
+    exclusive and response is always defined exactly once per call.
+  - BUG 3: originally tried json.loads() on the response content 
+    inside generate() itself — moved this responsibility OUT of 
+    groqclient.py and into query_rewriter.py instead, using 
+    QueryStructures.model_validate_json() there. Reasoning: 
+    groqclient.py shouldn't need to know about specific Pydantic 
+    schemas belonging to callers — boundary normalization (turning 
+    raw JSON into a typed object) belongs at the point where the 
+    schema is known, not inside the generic LLM wrapper.
+  - OPEN ISSUE FLAGGED (not yet fixed, discussed conceptually): 
+    generate() currently returns str when schema is None and dict 
+    when schema is set — inconsistent return contract based on 
+    input. Flagged as the same "type contract" issue as the old 
+    bm25_search.py "".join() bug. Not yet resolved — revisit if it 
+    causes a bug downstream.
+
+---
+query_rewriter.py (NEW FILE, V2 — query rewriting + query expansion)
+  - function: query_rewriter(query: str, instruction: str) -> list[str]
+  - uses GroqClient with output_schema=QueryStructures 
+    (Pydantic model: query: list[str], extra="forbid")
+  - calls rewriter.generate(rewriter_prompt) → gets back a dict 
+    (structured output), validates via 
+    QueryStructures.model_validate_json() [switched from 
+    model_validate() after moving away from manual json.loads() — 
+    model_validate_json() takes the raw JSON string directly]
+  - returns validate.query → clean list[str]
+  - CALLED TWICE in main.py with two different instruction strings:
+    1. "Optimize for vector search only... semantic phrasing" 
+       → vector_query_list (4 versions)
+    2. "Optimize for BM25 search only... keyword-dense phrasing" 
+       → bm25_query_list (4 versions)
+  - This is the RAG-Fusion / query expansion pattern: N reworded 
+    versions of the same query, each retrieved separately, merged 
+    via RRF.
+  - BUG HE HAD (found via trace): early version iterated over 
+    vector_query_list with a plain for loop BEFORE parsing — because 
+    generate() returned a raw JSON string, `for x in json_string` 
+    iterates CHARACTER BY CHARACTER, not query by query. Looked like 
+    the program was "stuck" because it silently fired off hundreds of 
+    embed API calls (one per character) instead of 4. Self-diagnosed 
+    via type-checking print statements before fixing.
 
 ---
 
@@ -508,6 +542,21 @@ confirmed AGAIN in bm25_search.py, watch for these same families)
 10. DEAD CODE / WRONG CONDITIONALS
     is not list checks identity not type — use isinstance() instead.
 
+11. MISSING self IN METHOD SIGNATURE
+    Defined a method without self as first param, but called it via 
+    self.method(arg) — Python auto-injects the instance as the first 
+    positional argument regardless of what you named it, so the 
+    parameter meant for your real argument silently received the 
+    instance object instead. Same family as arg-count mismatches, 
+    but specifically about forgetting `self` is invisible-but-mandatory.
+
+12. STALE VARIABLE REFERENCES AFTER REFACTORING INTO A CLASS
+    When converting a standalone function into a class method, left 
+    behind references to old local variables (`data`, `corpus`) that 
+    no longer exist in the new scope because they were moved into 
+    __init__ as self.corpus etc. NameError from not fully tracing 
+    scope changes during a refactor.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW THE FIRST SUCCESSFUL TEST WENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -542,43 +591,92 @@ plot/logistics chunks.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 WHERE WE ARE RIGHT NOW / IMMEDIATE NEXT STEP
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+V2 QUERY REWRITING + QUERY EXPANSION (RAG-FUSION) — FUNCTIONALLY 
+COMPLETE AND TESTED END-TO-END:
+  query_rewriter.py  ✅ done — generates 4 vector-optimized + 4 
+                       BM25-optimized query variants per user question
+  main.py            ✅ updated — full pipeline now:
+    query_rewriter (x2) → retriever loop (x4) + bm25_search loop (x4) 
+    → rrf_merge → rerank → prompt_builder → llm
 
-V1 HYBRID SEARCH IS FULLY BUILT AND WIRED:
-  bm25_search.py    ✅ done
-  rrf_merge.py       ✅ done
-  reranker.py        ✅ done (BONUS — built ahead of plan, using 
-                       sentence-transformers CrossEncoder 
-                       "cross-encoder/ms-marco-MiniLM-L-6-v2", 
-                       NOT Jina reranker as originally planned — 
-                       he changed his mind mid-project and it 
-                       worked fine this time)
-  main.py            ✅ fully wired: retriever + bm25_search → 
-                       rrf_merge → rerank → prompt_builder → llm
+  CONFIRMED WORKING on real test document (Atomic Habits book, not 
+  the lighthouse story anymore) — asked a real multi-part question 
+  about the 4 Laws of Behavior Change, got back a grounded, correctly 
+  cited answer pulling from the right chunks (3rd/4th law content).
 
-ALSO BUILT ON HIS OWN ( added himself 
-without asking first — confirmed working, he understands it):
-  memory.py — conMemory() function, rolling-window conversation 
-    memory stored in a JSON file, capped length (not unlimited), 
-    injected into prompt_builder each turn
+  PERFORMANCE NOTES:
+  - BM25 class refactor: now loads/scores in under a second (was 
+    rebuilding full index every query before)
+  - RRF merge: fast, not a bottleneck
+  - Reranker: ~30sec one-time model load cost at program start 
+    (CrossEncoder weights into memory) — CONFIRMED this is a one-time 
+    cost per program run, not per-query. Not a bug, just an accepted 
+    fixed cost. Model is loaded at module level (executes once on 
+    import), reused correctly across all queries in the same session.
 
-ARCHITECTURE CHANGES HE MADE UNILATERALLY (confirmed intentional, 
-not bugs — he explicitly said "I can make changes on my own"):
-  - prompt_builder(query, chunks, memory) now takes 3 args and 
-    returns ONE combined string (not the original tuple of 
-    system_prompt/user_prompt)
-  - GroqClient.generate(prompt) now takes ONE argument instead of 
-    the original two (system_prompt, user_prompt)
-  - Renamed llm.py → groqclient.py
+NOT YET BUILT FROM THE ORIGINAL V2 PLAN:
+  - Sub-query decomposition (splitting a complex multi-intent 
+    question into separate sub-questions, retrieving each separately, 
+    then merging answers) — this is the next candidate. Flagged 
+    during testing that the test query genuinely had TWO unrelated 
+    intents glued together (a book content question + an unrelated 
+    personal question) — good real-world case for why decomposition 
+    exists as a separate technique from expansion.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT WE'LL BUILD NEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-V1 IS FUNCTIONALLY COMPLETE. NEXT STEP IS TESTING, NOT BUILDING:
-  Run the full pipeline end-to-end on the lighthouse test document 
-  with several real questions. Compare vector-only vs BM25-only vs 
-  hybrid vs hybrid+reranked results manually. No new file needed for 
-  this — just running main.py and observing output at each stage.
+V2 remaining piece — SUB-QUERY DECOMPOSITION (not yet built):
+  Problem: a single user query can contain MULTIPLE unrelated 
+  intents glued together. Real example hit during testing: 
+  "why is there a game of thrones reference in the book, also how 
+  would i recover from coding addiction from trauma" — two totally 
+  separate questions in one string.
 
-AFTER TESTING IS DONE, HE IS READY TO START V2 (query rewriting / 
-query expansion / RAG-Fusion / sub-query decomposition) IN this NEW CHAT.
+  What query expansion (already built) does with this: generates 
+  4 variants that ALL still contain BOTH unrelated intents smashed 
+  together — expansion rephrases, it doesn't split. So every 
+  retrieval call is still searching for a weird hybrid of two 
+  unrelated topics at once, which hurts retrieval quality for both 
+  halves.
 
+  What sub-query decomposition should do instead: detect that a 
+  query has multiple independent intents, SPLIT it into separate 
+  clean sub-questions, retrieve for each sub-question independently, 
+  then merge/combine the answers (not just the chunks) at the end.
+
+  Open design questions to pitch before building:
+  - How do we detect a query needs splitting vs. doesn't? 
+    (LLM call asking "is this one question or multiple?")
+  - Does decomposition happen BEFORE or INSTEAD OF query expansion? 
+    (likely: decompose first, THEN expand each sub-query — 
+    decomposition and expansion solve different problems and can 
+    stack)
+  - Does each sub-query get its own full retrieval pipeline run 
+    (retrieve → rrf → rerank) independently, then results get 
+    combined at the prompt-building stage or at the answer stage?
+  - What does prompt_builder need to change to handle "multiple 
+    unrelated answer topics in one response" cleanly?
+
+AFTER sub-query decomposition, remaining V2 items to revisit:
+  - Query rewriting was done early (mentioned as already complete 
+    before this session) — confirm this still exists as a separate 
+    step from expansion, or whether expansion absorbed it.
+
+THEN move to V3 (SMARTER PIPELINE DECISIONS):
+  - Adaptive retrieval (Self-RAG style) — skip retrieval entirely 
+    for queries that don't need it
+  - Retrieval verification — check retrieved chunks are actually 
+    relevant before stuffing them in the prompt
+  - Answer verification — check the final answer is grounded in 
+    context, not hallucinated
+
+OPEN, UNRESOLVED ITEM CARRIED FORWARD FROM THIS SESSION:
+  - GroqClient.generate() has an inconsistent return type (str when 
+    no schema, dict when schema is set) — flagged, not yet fixed. 
+    Revisit if it causes a downstream bug, or clean it up before 
+    building decomposition (which will likely ALSO need structured 
+    output, same pattern as query_rewriter).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RERANKING — BUILT AHEAD OF SCHEDULE THIS SESSION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
