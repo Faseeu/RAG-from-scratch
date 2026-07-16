@@ -159,26 +159,30 @@ V5 — PRODUCTION
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-WHAT WE BUILT — V0 FILE BY FILE
+WHAT WE BUILT —  FILE BY FILE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ALL FILES ARE COMPLETE AND WORKING. Here is the full picture:
 
-PROJECT STRUCTURE:
 rag/
-├── .env                  API keys, never committed
-├── .gitignore            protects secrets + cleans repo
-├── loader.py             ✅ done, perfect, no bugs
-├── text_chunker.py       ✅ done (was called split_into_chunks.py)
+├── .env
+├── .gitignore
+├── loader.py             ✅ done
+├── baseschema.py         ✅ done -- where the pydantic model for the querystructures of lists of queries for query expansion is present
+├── text_chunker.py       ✅ done
 ├── embeddings.py         ✅ done
 ├── cosine_similarity.py  ✅ done
 ├── storage.py            ✅ done
 ├── ingest.py             ✅ done
-├── retriever.py 
-├── rrf_merge.py           ✅ done
+├── retriever.py          ✅ done
+├── bm25_search.py        ✅ done — now class BM25 (see below)
+├── rrf_merge.py          ✅ done
+├── reranker.py            ✅ done — module-level singleton CrossEncoder
 ├── prompt_builder.py     ✅ done
-├── llm.py                ✅ done
-└── main.py               ✅ done
+├── groqclient.py         ✅ done (renamed from llm.py) — now supports structured output
+├── query_rewriter.py     ✅ done (NEW, V2) — query rewriting + query expansion
+├── memory.py             ✅ done (self-added, V1) — conMemory()
+└── main.py               ✅ done — fully wired: query_rewriter → hybrid retrieval → rrf_merge → rerank → prompt_builder → llm
 
 ---
 

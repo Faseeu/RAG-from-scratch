@@ -22,7 +22,7 @@ def rerank(query: str, chunks: list[str], top_k: int = 5) -> list[str]:
         pairs.append([query, chunk])
     scores = model.predict(pairs)
     # print(pairs)
-    print(scores)
+    print(f"SCORES FROM RERANKER: {scores}")
     # top_scores = [{i, score} for i, score in enumerate(scores)]
     scores_dict = [
         {"score": score, "chunk": chunk} for score, chunk in zip(scores, chunks)
