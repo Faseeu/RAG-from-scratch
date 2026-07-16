@@ -177,7 +177,7 @@ rag/
 ├── retriever.py          ✅ done
 ├── bm25_search.py        ✅ done — now class BM25 (see below)
 ├── rrf_merge.py          ✅ done
-├── reranker.py            ✅ done — module-level singleton CrossEncoder
+├── reranker.py           ✅ done — module-level singleton CrossEncoder
 ├── prompt_builder.py     ✅ done
 ├── groqclient.py         ✅ done (renamed from llm.py) — now supports structured output
 ├── query_rewriter.py     ✅ done (NEW, V2) — query rewriting + query expansion
