@@ -4,7 +4,7 @@ def prompt_builder(query, chunks, memory):
     Don't make things up
     If the answer isn't there, say so"""
     rag = "\n\n".join(chunks)
-
+    # rag = "\n\n".join(chunk for chunk in chunks)
     prompt = f"""
     You are a STRICT RAG assistant. You have NO external knowledge.
 

@@ -168,22 +168,22 @@ rag/
 ├── .env
 ├── .gitignore
 ├── loader.py             ✅ done
-├── baseschema.py         ✅ done -- where the pydantic model for the querystructures of lists of queries for query expansion is present
 ├── text_chunker.py       ✅ done
 ├── embeddings.py         ✅ done
 ├── cosine_similarity.py  ✅ done
 ├── storage.py            ✅ done
 ├── ingest.py             ✅ done
 ├── retriever.py          ✅ done
-├── bm25_search.py        ✅ done — now class BM25 (see below)
+├── bm25_search.py        ✅ done — class BM25, memoized index build
 ├── rrf_merge.py          ✅ done
 ├── reranker.py           ✅ done — module-level singleton CrossEncoder
 ├── prompt_builder.py     ✅ done
-├── groqclient.py         ✅ done (renamed from llm.py) — now supports structured output
-├── query_rewriter.py     ✅ done (NEW, V2) — query rewriting + query expansion
+├── groqclient.py         ✅ done (renamed from llm.py) — structured output support
+├── baseschema.py         ✅ done (NEW) — shared Pydantic QueryStructures model
+├── query_rewriter.py     ✅ done (V2) — query rewriting + expansion
+├── decomposer.py         ✅ done (NEW, V2) — sub-query decomposition
 ├── memory.py             ✅ done (self-added, V1) — conMemory()
-└── main.py               ✅ done — fully wired: query_rewriter → hybrid retrieval → rrf_merge → rerank → prompt_builder → llm
-
+└── main.py               ✅ done — fully wired, see pipeline diagram below
 ---
 
 loader.py
@@ -260,6 +260,16 @@ ingest.py
     overwrote every iteration. Fix: chunks_with_vectors.append({...})
 
 ---
+baseschema.py (NEW FILE — extracted this session)
+  - holds QueryStructures Pydantic model, shared between query_rewriter.py 
+    and decomposer.py since both need the same shape: {"query": list[str]}
+  - model_config = ConfigDict(extra="forbid") — required for Groq's 
+    strict JSON schema mode (see groqclient.py bug history)
+  - Reused as-is for decomposition — no new schema needed, since 
+    "split into sub-queries" and "expand into variants" both just 
+    need "give me back a list of strings"
+
+___
 
 retriever.py
   - online search step
@@ -400,7 +410,43 @@ query_rewriter.py (NEW FILE, V2 — query rewriting + query expansion)
     via type-checking print statements before fixing.
 
 ---
-
+decomposer.py (NEW FILE, V2 — sub-query decomposition)
+  - function: query_decomposer(query: str) -> list[str]
+  - uses a SEPARATE GroqClient instance, originally tried 
+    "llama-3.1-8b-instant" (cheap model, correct instinct — 
+    decomposition is a narrow classification/splitting task, doesn't 
+    need the big model) — BUT that model didn't support structured 
+    output, so switched to the same 20b-class model used in 
+    query_rewriter.py
+  - PROMPT DESIGN — iterated once. Original draft was too vague 
+    ("is he asking one question or multiple"). Upgraded to explicitly 
+    define "unrelated" (could be asked in separate conversations with 
+    no loss of meaning) AND explicitly carve out the compare/contrast 
+    trap: "difference between X and Y" / "how does X relate to Y" = 
+    ONE question, do NOT split. Also added: each returned sub-query 
+    must be fully self-contained (no dangling pronouns/fragments).
+  - CONFIRMED WORKING under hard test: correctly kept 
+    "difference between 1st and 2nd law" as ONE sub-query while 
+    splitting out Pakistan/Japan experiments and an unrelated 
+    Game-of-Thrones question as separate sub-queries.
+  - BUGS HE HAD (found via trace, self-fixed):
+    1. Variable shadowing: `for user_query in decomposed_query: 
+       query = user_query` — overwrote the original `query` variable 
+       used later for prompt_builder(). Confirmed via output: earlier 
+       broken run showed only the LAST sub-query text printed right 
+       before the final Response, instead of the original full 
+       question. Fixed by using a distinct loop variable name and 
+       not reassigning `query`.
+    2. Accumulator bug: `full_query_chunks.append(top_chunks)` where 
+       top_chunks is already a list[str] — .append() shoved the WHOLE 
+       list in as one nested element instead of flattening, producing 
+       list[list[str]] instead of list[str]. This crashed 
+       prompt_builder's "\n\n".join(chunks) with 
+       "TypeError: expected str instance, list found". FIXED by 
+       switching to .extend() instead of .append() — same bug 
+       family as "wrong container shape" (#6 on mistake list), new 
+       flavor: nesting depth instead of dict-vs-list.
+___
 main.py
   - the agent loop
   - loads vector store ONCE before the loop (not inside it)
@@ -557,6 +603,27 @@ confirmed AGAIN in bm25_search.py, watch for these same families)
     __init__ as self.corpus etc. NameError from not fully tracing 
     scope changes during a refactor.
 
+13. VARIABLE SHADOWING VIA LOOP REUSE OF AN OUTER-SCOPE NAME
+    `for user_query in decomposed_query: query = user_query` silently 
+    overwrote the original `query` parameter that later code (outside 
+    the loop) still depended on. No crash — just silently wrong data 
+    flowing into a downstream function. Same danger class as bug #4 
+    (silent wrong math from missing parentheses) — no exception, 
+    just wrong behavior that LOOKS fine until you inspect output 
+    closely.
+
+14. .append() vs .extend() — WRONG NESTING DEPTH WHEN ACCUMULATING 
+    LISTS OF LISTS
+    Accumulating already-list-shaped results (top_chunks: list[str]) 
+    using .append() inside a loop produces list[list[str]] instead of 
+    the intended flat list[str]. Downstream code expecting a flat 
+    list (prompt_builder's "\n\n".join(chunks)) crashes with 
+    "TypeError: expected str instance, list found" — because 
+    chunks[0] is itself a list, not a string. Same family as bug #6 
+    (wrong container type) but specifically about accumulation 
+    depth, not dict-vs-list/set-vs-list confusion.
+
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 HOW THE FIRST SUCCESSFUL TEST WENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -626,57 +693,41 @@ NOT YET BUILT FROM THE ORIGINAL V2 PLAN:
 WHAT WE'LL BUILD NEXT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-V2 remaining piece — SUB-QUERY DECOMPOSITION (not yet built):
-  Problem: a single user query can contain MULTIPLE unrelated 
-  intents glued together. Real example hit during testing: 
-  "why is there a game of thrones reference in the book, also how 
-  would i recover from coding addiction from trauma" — two totally 
-  separate questions in one string.
+IMMEDIATE NEXT STEP (per dev's explicit request): pause new features, 
+audit and fix remaining technical debt across the V2 pipeline before 
+deciding on the relevance-threshold vs Architecture B fork. No new 
+files — go back through decomposer.py, query_rewriter.py, main.py's 
+wiring, and confirm nothing else is silently broken the way the 
+shadowing/accumulator bugs were.
 
-  What query expansion (already built) does with this: generates 
-  4 variants that ALL still contain BOTH unrelated intents smashed 
-  together — expansion rephrases, it doesn't split. So every 
-  retrieval call is still searching for a weird hybrid of two 
-  unrelated topics at once, which hurts retrieval quality for both 
-  halves.
+AFTER debt cleanup, decide between:
+  1. Add relevance threshold on reranker scores (targeted, cheap fix 
+     for the confirmed noise-injection failure mode)
+  2. Move to Architecture B — per-sub-query isolated LLM calls, 
+     merge answers instead of chunks (bigger change, solves dilution 
+     by construction, costs more calls)
+  (not mutually exclusive — could do #1 now, evaluate later if #2 
+  is still needed)
 
-  What sub-query decomposition should do instead: detect that a 
-  query has multiple independent intents, SPLIT it into separate 
-  clean sub-questions, retrieve for each sub-question independently, 
-  then merge/combine the answers (not just the chunks) at the end.
+STILL OPEN, CARRIED FORWARD, UNRESOLVED:
+  - GroqClient.generate() inconsistent return type (str vs dict 
+    depending on whether schema is set) — flagged twice now, still 
+    not fixed. Both query_rewriter.py and decomposer.py now depend 
+    on the dict-returning path, so this is worth cleaning up before 
+    a third consumer of GroqClient gets added.
 
-  Open design questions to pitch before building:
-  - How do we detect a query needs splitting vs. doesn't? 
-    (LLM call asking "is this one question or multiple?")
-  - Does decomposition happen BEFORE or INSTEAD OF query expansion? 
-    (likely: decompose first, THEN expand each sub-query — 
-    decomposition and expansion solve different problems and can 
-    stack)
-  - Does each sub-query get its own full retrieval pipeline run 
-    (retrieve → rrf → rerank) independently, then results get 
-    combined at the prompt-building stage or at the answer stage?
-  - What does prompt_builder need to change to handle "multiple 
-    unrelated answer topics in one response" cleanly?
-
-AFTER sub-query decomposition, remaining V2 items to revisit:
-  - Query rewriting was done early (mentioned as already complete 
-    before this session) — confirm this still exists as a separate 
-    step from expansion, or whether expansion absorbed it.
-
-THEN move to V3 (SMARTER PIPELINE DECISIONS):
+THEN move to V3 (SMARTER PIPELINE DECISIONS) once V2 is considered 
+fully hardened:
   - Adaptive retrieval (Self-RAG style) — skip retrieval entirely 
     for queries that don't need it
   - Retrieval verification — check retrieved chunks are actually 
-    relevant before stuffing them in the prompt
+    relevant before stuffing them in the prompt (NOTE: this heavily 
+    overlaps with the "relevance threshold" idea above — may end up 
+    being the same feature, just formalized as its own pipeline stage)
   - Answer verification — check the final answer is grounded in 
     context, not hallucinated
 
-OPEN, UNRESOLVED ITEM CARRIED FORWARD FROM THIS SESSION:
-  - GroqClient.generate() has an inconsistent return type (str when 
-    no schema, dict when schema is set) — flagged, not yet fixed. 
-    Revisit if it causes a downstream bug, or clean it up before 
-    building decomposition (which will likely ALSO need structured 
-    output, same pattern as query_rewriter).
+    
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RERANKING — BUILT AHEAD OF SCHEDULE THIS SESSION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
