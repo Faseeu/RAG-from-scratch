@@ -7,8 +7,10 @@ from baseschema import QueryStructures
 
 # API_KEY = os.getenv("GROQ_API_KEY")
 
+rewriter = GroqClient(model="openai/gpt-oss-20b", output_schema=QueryStructures)
 
-def query_rewriter(query: str, extra_instructions: str, model="openai/gpt-oss-20b"):
+
+def query_rewriter(query: str, extra_instructions: str):
     imp_instructions = """
     Create the query in 4 different versions
     The goal is to diversify the query
@@ -21,7 +23,7 @@ def query_rewriter(query: str, extra_instructions: str, model="openai/gpt-oss-20
     - Narrow (zoom in):     Make the query more specific — add assumed detail
     - Perspective shift:    Ask it as if from a different angle e.g. "what would the answer look like", or a related sub-topic/assumption
     """
-    rewriter = GroqClient(model=model, output_schema=QueryStructures)
+
     rewriter_prompt = f"""
     Rewrite the given query to make it more suitable for 
     - RAG
@@ -48,3 +50,15 @@ def query_rewriter(query: str, extra_instructions: str, model="openai/gpt-oss-20
     validate = QueryStructures.model_validate_json(improved_query)
 
     return validate.query
+
+
+if __name__ == "__main__":
+    query = query_rewriter(
+        "Suggest me a new method to build a strong identity daily.",
+        "Optimize for BM25 and vector search together.",
+    )
+    print(query)
+    print(type(query))
+    print(len(query))
+    for q in query:
+        print(type(q), repr(q))

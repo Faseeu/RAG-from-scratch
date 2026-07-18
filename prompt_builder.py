@@ -51,3 +51,8 @@ def prompt_builder(query, chunks, memory):
    """
 
     return prompt
+
+
+# if __name__ == "__main__":
+#     prompt = prompt_builder("Suggest me a new method to build a strong identity daily.",)
+

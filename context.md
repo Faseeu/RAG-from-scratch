@@ -289,42 +289,41 @@ retriever.py
 
 ---
 
-bm25_search.py — REFACTORED THIS SESSION (V2 cleanup, memoization pattern)
-  - PROBLEM FOUND: original score() rebuilt BM25Okapi(tk_corpus) on 
-    EVERY query — i.e. rebuilt the entire index (IDF + avg length 
-    calculations across whole corpus) every single call, even though 
-    the corpus never changes between queries. Same category as 
-    loading vector store inside while loop — expensive "build" step 
-    glued to cheap "query" step.
-  - CONCEPT TAUGHT: memoization (cache output for a given input) 
-    doesn't literally apply here (tk_query changes every call, 
-    tk_corpus is unhashable as dict key) — the real fix is the 
-    "build once in __init__, reuse via self" pattern, same shape as 
-    GroqClient's self.client = Groq().
-  - FIX: converted to a class `BM25`
-    __init__(self, filename="RAG.json") loads data, tokenizes corpus, 
-    builds self.bm25 = BM25Okapi(self.tk_corpus) ONCE
-    bm25_search(self, query, top_k, filename) — per-query search, 
-    reuses self.bm25 and self.corpus, no rebuilding
-    score(self, tk_query) — thin wrapper around self.bm25.get_scores()
-    tokenize(self, textlist) and remove_puncutation(self, text) — 
-    now proper instance methods
-  - BUGS HE HAD DURING REFACTOR (found via trace, self-corrected):
-    1. bm25_search() referenced `data` and `corpus` as if still local 
-       vars from the old function version — but never redefined them 
-       inside the method after moving corpus-loading into __init__. 
-       NameError. Fix: use self.corpus instead.
-    2. Called self.score(self.tk_corpus, tk_query) — two args — but 
-       score(self, tk_query) only accepts one (self.bm25 already 
-       holds the corpus internally now). Arg count mismatch.
-    3. remove_puncutation(text) defined WITHOUT self as first param, 
-       but called as self.remove_puncutation(text) — bound method 
-       call auto-injects self as the first positional slot, so the 
-       parameter named `text` was silently receiving the BM25 
-       instance object instead of the actual text. Fixed by adding 
-       self as the first parameter.
-  - RESULT: confirmed working, BM25 search now loads/scores in 
-    under a second, no repeated index rebuilding.
+reranker.py — RELEVANCE THRESHOLD ADDED THIS SESSION (V2 hardening)
+  - PROBLEM CONFIRMED WITH REAL EVIDENCE (not theoretical): during 
+    hard multi-intent query testing, a sub-query with NO genuinely 
+    relevant chunks available (e.g. sci-fi movie recommendation — 
+    book has no such content) still had top_k chunks FORCED into the 
+    merged context regardless, because rerank() always sliced 
+    top_k without checking if the scores were actually good.
+  - EVIDENCE: reranker scores for a truly relevant sub-query looked 
+    like [2.83, 2.46, 2.33, -0.37, ...] (real signal, positive-ish). 
+    Scores for a genuinely irrelevant sub-query looked like 
+    [-11.21, -11.31, -11.29, ...] (tight cluster, deeply negative, 
+    no real signal at all).
+  - FIX: added a threshold filter BEFORE sorting/slicing:
+    scores_dict = [{"score": score, "chunk": chunk} for score, chunk 
+    in zip(scores, chunks) if score > threshold]
+    threshold is a function parameter, default value = -5, chosen 
+    empirically based on the observed gap between real signal and 
+    pure noise above (not derived from a formula — a reasoned 
+    starting guess based on real evidence, meant to be adjusted 
+    later if it proves too strict/loose across more test queries).
+  - This is a FIXED threshold (same number every query), not yet a 
+    RELATIVE threshold (self-adjusting based on top score per 
+    batch) — fixed was chosen deliberately as the simpler first 
+    iteration; relative threshold flagged as a possible future 
+    upgrade if fixed proves inadequate.
+  - EFFECT: a sub-query can now legitimately contribute ZERO chunks 
+    to full_query_chunks if nothing clears the bar, instead of 
+    always forcing in top_k regardless of quality. This directly 
+    targets the CONFIRMED dilution/noise-injection failure mode from 
+    earlier testing (sci-fi sub-query polluting context, likely 
+    squeezing out real Japan/Pakistan content).
+  - NOT YET RE-TESTED end-to-end after this change — next session 
+    should re-run the same hard multi-intent test query used before 
+    to confirm the threshold actually improves the final answer 
+    quality as expected.
 
 ___
 prompt_builder.py
@@ -343,45 +342,38 @@ prompt_builder.py
     Fix: "\n\n".join(chunks)
 
 ---
-
-groqclient.py (renamed from llm.py) — UPDATED THIS SESSION (V2, 
-structured output support added)
-  - GroqClient class: __init__(self, model, max_tokens=1000, 
-    output_schema=None) — added output_schema param, stored as self.schema
-  - generate(self, user_prompt) -> str | dict depending on schema 
-    (flagged as a design smell — see below)
-  - BUG 1 (crash): passing a Pydantic schema straight into Groq's 
-    response_format via schema.model_json_schema() failed with 
-    "additionalProperties:false must be set on every object" — 
-    Groq's strict JSON schema mode requires that flag on every 
-    object node in the schema tree; Pydantic doesn't emit it unless 
-    told to. FIX: added `model_config = ConfigDict(extra="forbid")` 
-    to the Pydantic model (QueryStructures) — this both (a) rejects 
-    unknown fields at runtime AND (b) makes model_json_schema() emit 
-    additionalProperties:false. Confirmed by printing the schema 
-    before/after.
-  - BUG 2 (logic, no crash but silently wrong before fix): original 
-    code had `if self.schema is not None: response = ...create(...)` 
-    with NO else, followed by an unconditional second 
-    ...create(...) call below it — meaning the schema branch never 
-    actually got skipped, both paths ran the second call regardless. 
-    FIXED by adding proper else block — now each branch is mutually 
-    exclusive and response is always defined exactly once per call.
-  - BUG 3: originally tried json.loads() on the response content 
-    inside generate() itself — moved this responsibility OUT of 
-    groqclient.py and into query_rewriter.py instead, using 
-    QueryStructures.model_validate_json() there. Reasoning: 
-    groqclient.py shouldn't need to know about specific Pydantic 
-    schemas belonging to callers — boundary normalization (turning 
-    raw JSON into a typed object) belongs at the point where the 
-    schema is known, not inside the generic LLM wrapper.
-  - OPEN ISSUE FLAGGED (not yet fixed, discussed conceptually): 
-    generate() currently returns str when schema is None and dict 
-    when schema is set — inconsistent return contract based on 
-    input. Flagged as the same "type contract" issue as the old 
-    bm25_search.py "".join() bug. Not yet resolved — revisit if it 
-    causes a bug downstream.
-
+groqclient.py (renamed from llm.py) — FURTHER UPDATED THIS SESSION 
+(V2 cleanup)
+  - REMOVED the stray json.loads() line that was previously left 
+    commented out — generate() now ALWAYS returns a plain str, no 
+    branching return type anymore. This retroactively closes the 
+    "inconsistent return type" issue flagged earlier — turns out 
+    deleting json.loads() fixed it as a side effect, dev didn't 
+    initially realize this. Confirmed: Groq's response.choices[0]
+    .message.content is ALWAYS a string regardless of whether 
+    response_format/structured output was used — "structured output" 
+    just guarantees the STRING is valid JSON text, it does not mean 
+    the SDK auto-converts it to a dict. This is why 
+    model_validate_json() (which wants a raw string) is the correct 
+    pairing, not model_validate() (which wants a dict).
+  - if/else branches (schema vs no-schema) confirmed correct and 
+    mutually exclusive — response always defined exactly once.
+  - DEAD CODE FLAGGED (not fixed): `API_KEY = os.getenv("GROQ_API_KEY")` 
+    at module level is assigned but never used — Groq() reads the env 
+    var internally on its own. Harmless, cosmetic cleanup only.
+  - KNOWN OPEN ISSUE — EXPLICITLY DEFERRED BY DEV, NOT URGENT, DO NOT 
+    push to fix unprompted: 
+    generate()'s try/except swallows API failures and returns a 
+    plain error STRING (e.g. "Error: LLM API failed with message: 
+    ...") instead of raising. When self.schema is set, this error 
+    string then gets fed into the CALLER's model_validate_json() 
+    (in query_rewriter.py / decomposer.py), which will fail there 
+    instead — meaning the traceback will point at the wrong file 
+    (a JSON-parsing error in query_rewriter.py) rather than the real 
+    root cause (an API failure in groqclient.py). This is "exception 
+    swallowing that resurfaces as a misleading error downstream" — 
+    a known, understood, but consciously deprioritized issue. Dev 
+    explicitly said: revisit later, not now, don't nag about it.
 ---
 query_rewriter.py (NEW FILE, V2 — query rewriting + query expansion)
   - function: query_rewriter(query: str, instruction: str) -> list[str]
@@ -693,40 +685,44 @@ NOT YET BUILT FROM THE ORIGINAL V2 PLAN:
 WHAT WE'LL BUILD NEXT
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-IMMEDIATE NEXT STEP (per dev's explicit request): pause new features, 
-audit and fix remaining technical debt across the V2 pipeline before 
-deciding on the relevance-threshold vs Architecture B fork. No new 
-files — go back through decomposer.py, query_rewriter.py, main.py's 
-wiring, and confirm nothing else is silently broken the way the 
-shadowing/accumulator bugs were.
+V2 IS NOW CONSIDERED FUNCTIONALLY HARDENED FOR NOW:
+  - query rewriting ✅
+  - query expansion / RAG-Fusion ✅
+  - sub-query decomposition ✅ (shadowing + accumulator bugs fixed)
+  - GroqClient return-type inconsistency ✅ (fixed as side effect of 
+    removing json.loads())
+  - relevance threshold on reranker ✅ (fixed value -5, empirically 
+    chosen, NOT YET RE-TESTED end-to-end)
 
-AFTER debt cleanup, decide between:
-  1. Add relevance threshold on reranker scores (targeted, cheap fix 
-     for the confirmed noise-injection failure mode)
-  2. Move to Architecture B — per-sub-query isolated LLM calls, 
-     merge answers instead of chunks (bigger change, solves dilution 
-     by construction, costs more calls)
-  (not mutually exclusive — could do #1 now, evaluate later if #2 
-  is still needed)
+EXPLICITLY DEFERRED, NOT FORGOTTEN, DO NOT PUSH UNPROMPTED:
+  - GroqClient exception-swallowing issue (error string leaking into 
+    downstream model_validate_json() calls, misleading tracebacks). 
+    Dev is aware, understands the failure mode, has consciously 
+    chosen to deal with it later. Respect this.
+  - Architecture A vs B decision (merge chunks vs merge answers) — 
+    tabled while relevance threshold was tried as a cheaper first 
+    fix. May revisit if threshold alone isn't enough once retested.
 
-STILL OPEN, CARRIED FORWARD, UNRESOLVED:
-  - GroqClient.generate() inconsistent return type (str vs dict 
-    depending on whether schema is set) — flagged twice now, still 
-    not fixed. Both query_rewriter.py and decomposer.py now depend 
-    on the dict-returning path, so this is worth cleaning up before 
-    a third consumer of GroqClient gets added.
+NEXT UP: MOVING TO V3 — SMARTER PIPELINE DECISIONS
+  - Adaptive retrieval (Self-RAG style): ask "do I need to retrieve 
+    for this?" before retrieving at all — skip retrieval entirely 
+    for questions that don't need external context (e.g. "hi", "what 
+    can you help me with", general chit-chat)
+  - Retrieval verification: after retrieval, check if the retrieved 
+    chunks are ACTUALLY relevant before stuffing them into the 
+    prompt — NOTE: this heavily overlaps with the relevance threshold 
+    just built into reranker.py. Worth discussing at V3 start whether 
+    that threshold effectively already covers this, or whether V3 
+    wants a more formal separate verification STAGE (e.g. its own 
+    LLM call judging relevance, rather than just a numeric cutoff).
+  - Answer verification: after generation, check if the final answer 
+    is actually grounded in the retrieved context or hallucinated — 
+    brand new concept, not yet touched at all.
 
-THEN move to V3 (SMARTER PIPELINE DECISIONS) once V2 is considered 
-fully hardened:
-  - Adaptive retrieval (Self-RAG style) — skip retrieval entirely 
-    for queries that don't need it
-  - Retrieval verification — check retrieved chunks are actually 
-    relevant before stuffing them in the prompt (NOTE: this heavily 
-    overlaps with the "relevance threshold" idea above — may end up 
-    being the same feature, just formalized as its own pipeline stage)
-  - Answer verification — check the final answer is grounded in 
-    context, not hallucinated
-
+FIRST STEP OF V3 (next session): introduce the concept of adaptive 
+retrieval via analogy first (per dev's usual learning style), before 
+any code — cold start rule applies, make dev pitch the function 
+signature/decision logic before building.
     
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RERANKING — BUILT AHEAD OF SCHEDULE THIS SESSION

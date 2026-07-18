@@ -31,3 +31,14 @@ def query_decomposer(query):  # SUB QUERY DECOMPOSITION
     validated_query = QueryStructures.model_validate_json(broken_query)
 
     return validated_query.query
+
+
+if __name__ == "__main__":
+    response = query_decomposer(
+        "How do i make sure i act on the goldilocks principle. Also how do i apply the method the japanese factories use to maximize productivity. Also suggest me a new method to build a strong identity daily."
+    )
+    print(response)
+    print(type(response))
+    print(len(response))
+    for r in response:
+        print(type(r), repr(r))
