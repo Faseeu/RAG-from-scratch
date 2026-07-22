@@ -1,6 +1,6 @@
-from storage import load
-from embedding import embed
-from cosine_similarity import cosine_similarity
+from core.storage import load
+from core.embedding import embed
+from core.cosine_similarity import cosine_similarity
 
 
 def retriever(query, top_k: int = 15):

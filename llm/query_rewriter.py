@@ -1,5 +1,5 @@
-from groqclient import GroqClient
-from baseschema import QueryStructures
+from llm.groqclient import GroqClient
+from llm.baseschema import QueryStructures
 # from dotenv import load_dotenv
 # import os
 

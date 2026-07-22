@@ -1,4 +1,4 @@
-from storage import load
+from core.storage import load
 import string
 
 # import BM25

@@ -1,6 +1,6 @@
-from storage import load, store
+from core.storage import load, store
 
-from ingest import ingest
+from core.ingest import ingest
 
 ingest()
 data = load()

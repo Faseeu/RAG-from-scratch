@@ -1,9 +1,9 @@
 import json
 import string
 from rapidfuzz import process, fuzz
-from cosine_similarity import cosine_similarity
-from embed_cache_ingest import load, embedder
-from llmlayer import llm_call
+from core.cosine_similarity import cosine_similarity
+from guard.embed_cache_ingest import load, embedder
+from guard.llmlayer import llm_call
 
 filename = "data/basic_greets.json"
 with open(filename, "r") as f:
