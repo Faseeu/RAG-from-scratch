@@ -7,7 +7,7 @@ from rank_bm25 import BM25Okapi
 
 
 class BM25:
-    def __init__(self, filename="RAG.json"):
+    def __init__(self, filename="data/RAG.json"):
         data = load(filename)
         self.corpus = [vector["chunk"] for vector in data]
         self.tk_corpus = self.tokenize(self.corpus)

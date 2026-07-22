@@ -5,7 +5,7 @@ from cosine_similarity import cosine_similarity
 from embed_cache_ingest import load, embedder
 from llmlayer import llm_call
 
-filename = "basic_greets.json"
+filename = "data/basic_greets.json"
 with open(filename, "r") as f:
     hashmap = json.load(f)
 faq_enteries = load()
@@ -50,7 +50,7 @@ def fuzzysearch(query: str, threshold=60):
     return result[0] if result[1] > threshold else None
 
 
-def vector_search(query: str, threshold=0.65, filename="faq_enteries.json"):
+def vector_search(query: str, threshold=0.65, filename="data/faq_enteries.json"):
     query_embed = embedder([query], "retrieval.query")[0]
 
     similarity_scores: dict[int, float] = {}

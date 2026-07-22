@@ -1,12 +1,12 @@
 from groq import Groq
 
-from dotenv import load_dotenv
-import os
-import json
+# from dotenv import load_dotenv
+# import os
+# import json
 
-load_dotenv()  # reads .env file and loads all variables
+# load_dotenv()  # reads .env file and loads all variables
 
-API_KEY = os.getenv("GROQ_API_KEY")
+# API_KEY = os.getenv("GROQ_API_KEY")
 
 
 class GroqClient:
