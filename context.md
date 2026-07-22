@@ -445,7 +445,92 @@ main.py
   - while True: takes input → retrieve → prompt_builder → 
     llm.generate → print answer
 
+V3 — QUERY GUARD / ADAPTIVE RETRIEVAL — IN PROGRESS (NEW SESSION)
 
+New file: preprocessor.py
+  - Implements a 4-layer cost-cascade BEFORE query_rewriter runs, 
+    named "query_guard" concept (renamed file to preprocessor.py)
+  - Layer 1: exact_match() — hashmap lookup against basic_greets.json 
+    (expanded to 80 entries incl. slang/abbreviations like "thnx", 
+    "gr8", "u"), loaded ONCE at module level (fixed: was reloading 
+    from disk every call originally)
+  - Layer 2: fuzzysearch() — rapidfuzz process.extractOne(), 
+    fuzz.ratio scorer, threshold=60, catches typos/minor spelling 
+    variants basic_greets.json's exact match misses
+  - Layer 3 (STUBBED, NOT YET BUILT): check_embeds() — semantic FAQ 
+    lookup against embed_cache.json (list of dicts: 
+    {"query", "embedding", "answer"}), flat loop (no category 
+    grouping needed at runtime), threshold ~0.60-0.70, no LLM 
+    escalation needed here (falling through to Layer 4 IS the 
+    escalation)
+  - Layer 4 (NOT YET BUILT): cheap LLM call, returns [bool, answer] 
+    — bool = "was retrieval needed", answer = canned response if not
+  - remove_punctuation() function: went through 3 implementation 
+    attempts (list-in-list-comprehension bug → char-by-char single-
+    letter bug → working .join()+generator version → finally settled 
+    on str.translate() + str.maketrans() as the clean 1-pass solution, 
+    NEW CONCEPT taught this session)
+  - DUPLICATE LOGIC FLAGGED: punctuation removal now exists in BOTH 
+    bm25_search.py (broken, self version, unused) AND preprocessor.py 
+    (working, standalone version) — NOT YET consolidated into a 
+    shared utility file (same pattern as baseschema.py extraction). 
+    Flagged, not fixed.
+
+New file: embed_cache_ingest.py (V3, offline pipeline for Layer 3)
+  - Mirrors ingest.py's pattern: load() → embed in batches → store()
+  - BUG FIXED: json.dump(f) missing data arg — SAME bug as 
+    storage.py's original bug, same fix (json.dump(cache, f))
+  - BUG FIXED: zip(queries, all_embeddings) was zipping extracted 
+    strings instead of original dicts — fixed to zip(data, 
+    all_embeddings) so dct["query"]/dct["answer"] work correctly
+  - BUG STILL OPEN: embedder() function has NO return statement — 
+    every line after print(result) is commented out. Will silently 
+    return None, crashing all_embeddings.extend(None) at call site. 
+    NOT YET FIXED as of last check.
+  - DUPLICATION FLAGGED: embedder() manually re-implements the same 
+    Jina API POST call that already exists working in embeddings.py 
+    — dev imported nothing from embeddings.py and rewrote it instead. 
+    Not yet consolidated.
+
+BUG FOUND — CONTRACT MISMATCH between Layer 1 and Layer 2:
+  - exact_match() returns the ANSWER (hashmap[query])
+  - fuzzysearch() returns result[0] which is process.extractOne's 
+    MATCHED KEY STRING, not the looked-up answer — inconsistent 
+    return shape between the two layers doing the same job. NOT YET 
+    FIXED. Needs hashmap[result[0]] instead of raw result[0].
+
+KEY DESIGN DECISIONS LOCKED IN THIS SESSION:
+  - Cascade order confirmed: hashmap → fuzzy → embed-cache → cheap LLM
+  - Semantic CACHING of arbitrary past real user queries was PROPOSED 
+    and REJECTED — risk: similar-wording-but-different-meaning queries 
+    (e.g. "1st law" vs "4th law" of behavior change) could collide 
+    and serve a wrong cached answer confidently. Shelved, may revisit 
+    much later with stronger safeguards.
+  - Auto-appending Layer 4 LLM outputs back into Layer 3's list was 
+    PROPOSED and PARTIALLY ACCEPTED with a safety restriction: only 
+    cache Layer 4 outputs where bool == False (generic/non-retrieval 
+    answers) — NEVER cache True-branch outputs (retrieval-dependent 
+    answers), since those depend on which chunks got retrieved and 
+    aren't safe to treat as a fixed Q&A pair. Also flagged: should 
+    check cosine similarity against EXISTING cache entries before 
+    appending, to avoid unbounded growth from near-duplicate phrasings.
+  - embed_cache.json build script confirmed to follow ingest.py's 
+    existing pattern: separate one-off script (embed_cache_ingest.py), 
+    run manually/rarely — NOT a check-and-build-on-every-launch inside 
+    preprocessor.py. Reasoning: matches existing architecture 
+    (ingest.py vs main.py split), avoids paying a repeated "does file 
+    exist" check on every program launch for data that rarely changes.
+
+NOT YET DONE:
+  - check_embeds() Layer 3 function body — currently `pass`
+  - embed_cache.json — dev is going to research/generate a deeper, 
+    more diverse dataset themselves (prompted for this) rather than 
+    use the 25-entry starter list provided
+  - Layer 4 cheap LLM call — not started
+  - Wiring preprocessor() into main.py's actual pipeline — not started
+  - End-to-end test of the full 4-layer cascade — not done yet
+
+  
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 APIS AND TOOLS USED
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
