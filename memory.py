@@ -22,7 +22,8 @@ def conMemory(mode="store", memory=None, filename="conversation_memory.json"):
     elif mode == "load":
         full_memory = _read_memory(filename)
         # pprint(full_memory[:-5])
-        return full_memory[-5:]
+        # return full_memory[-5:]
+        return full_memory
 
 
-conMemory("load")
+# pprint(conMemory("load"))

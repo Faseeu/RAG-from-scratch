@@ -2,8 +2,8 @@ import json
 import string
 from rapidfuzz import process, fuzz
 from cosine_similarity import cosine_similarity
-from embed_cache_ingest import load, embedder, ingest_cache
-
+from embed_cache_ingest import load, embedder
+from llmlayer import llm_call
 
 filename = "basic_greets.json"
 with open(filename, "r") as f:
@@ -19,6 +19,17 @@ def preprocessor(query: str):
     fuzzy = fuzzysearch(query)
     if fuzzy is not None:
         return fuzzy
+
+    print("🧠 Embedding query... ", end="", flush=True)
+    vector = vector_search(query)
+    if vector is not None:
+        return vector
+    print("\r✅ Query embedded!      ")
+    llm = llm_call(query)
+    if llm is not None:
+        return llm
+
+    return None
 
 
 def exact_match(query: str):
@@ -45,11 +56,11 @@ def vector_search(query: str, threshold=0.65, filename="faq_enteries.json"):
     similarity_scores: dict[int, float] = {}
     # data_embed = [comp["embedding"] for comp in data]
 
-    print(query_embed)
+    # print(query_embed)
     # print(data_embed)
     for i, faq_entry in enumerate(faq_enteries):
         data_embed = faq_entry["embedding"]
-        print(type(data_embed))
+        # print(type(data_embed))
         score = cosine_similarity(query_embed, data_embed)
         similarity_scores[i] = score
 
@@ -84,12 +95,14 @@ def remove_puncutation(text):
     return results.strip()
 
 
-# print(preprocessor("yeah makes sense"))
-query = "???"
-query_search = vector_search(query)
+# # print(preprocessor("yeah makes sense"))
+# query = (
+#     "How to apply the 4 rules of behavior change. Can you explain from how the writer explained but better way"
+# )
+# query_search = preprocessor(query)
 
-# queries = [query["query"] for query in data]
-print(query_search)
+# # queries = [query["query"] for query in data]
+# print(query_search)
 
 
 # print(queries)

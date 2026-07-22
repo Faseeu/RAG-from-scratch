@@ -804,10 +804,128 @@ NEXT UP: MOVING TO V3 — SMARTER PIPELINE DECISIONS
     is actually grounded in the retrieved context or hallucinated — 
     brand new concept, not yet touched at all.
 
-FIRST STEP OF V3 (next session): introduce the concept of adaptive 
-retrieval via analogy first (per dev's usual learning style), before 
-any code — cold start rule applies, make dev pitch the function 
-signature/decision logic before building.
+═══════════════════════════════════════════════════════════════
+V3 — ADAPTIVE RETRIEVAL / QUERY GUARD — STATUS UPDATE
+═══════════════════════════════════════════════════════════════
+
+CONCEPT (taught this session):
+  Adaptive retrieval = a GATE in front of the full RAG pipeline.
+  "Does this query even need document retrieval?"
+  Analogy: hospital triage / overachieving waiter who shouldn't
+  sprint to the kitchen for "do you have wifi?"
+
+CASCADE PATTERN (production pattern, reinvented by dev):
+  Cheap layers first → expensive layers last.
+  Fail open toward retrieval when uncertain (safe bias).
+
+  Layer 1: exact_match()     — hashmap, FREE
+  Layer 2: fuzzysearch()     — rapidfuzz, FREE/local
+  Layer 3: vector_search()   — embed FAQ + cosine, 1 embed call
+  Layer 4: llm_call()        — cheap LLM classifier, rarest
+
+FILES ADDED / TOUCHED THIS SESSION:
+  preprocessor.py          ✅ working (cascade Layers 1–3 wired)
+  basic_greets.json        ✅ ~80 slang/greeting exact keys
+  embed_cache.json         ✅ curated FAQ (cats 1,2,3,4,11 only)
+  embed_cache_ingest.py    ✅ offline: load → batch embed → store
+  llmlayer.py              ✅ working (broke 1–2 times, accepted for now)
+  baseschema / ResponseStructure in llmlayer.py
+    needs_retrieval: bool
+    answer: str | None   (watch null handling — known flaky point)
+
+LAYER DETAILS:
+  L1 exact_match
+    - basic_greets.json loaded ONCE at module level (not per query)
+    - query lowercased + punctuation stripped first
+    - returns answer string or None
+
+  L2 fuzzysearch
+    - rapidfuzz process.extractOne, fuzz.ratio, threshold=60
+    - must return hashmap[key] (ANSWER), not bare key string
+      (contract mismatch bug found + fixed this session)
+    - empty/no-match → None → fall through
+
+  L3 vector_search
+    - compares query embed vs faq_entries embeddings (cosine)
+    - FIXED DESIGN: take ranked[0] only (ONE best match), NOT a
+      list of all above-threshold matches
+      (list shape was wrong copy from retriever.py's top-K job)
+    - threshold ~0.65
+    - returns answer string or None
+    - faq_entries loaded once at module level via load()
+
+  L4 llm_call (llmlayer.py)
+    - GroqClient + structured output ResponseStructure
+    - system prompt: classify retrieve vs answer-directly
+    - when needs_retrieval=False → return canned answer
+    - when needs_retrieval=True → return signal to run full pipeline
+    - CONFIRMED WORKING end-to-end with occasional flakes (1–2 breaks)
+    - Memory injection (last 15 Q&A) DESIGNED in prompt but NOT
+      wired yet — consciously deferred
+    - Auto-append of L4 False-branch answers into embed_cache
+      PROPOSED then SKIPPED by dev (boring, slow, low ROI) — OK
+
+NEW CONCEPTS TAUGHT:
+  - str.translate() + str.maketrans() for 1-pass punctuation strip
+  - Cascading classifiers (cheap→expensive)
+  - RapidFuzz / Levenshtein-style fuzzy match vs semantic embed
+  - Semantic FAQ (fixed curated list) ≠ semantic cache (growing
+    real-query cache) — latter shelved (Law1 vs Law4 collision risk)
+  - list-of-dicts over list-of-lists (same lesson as storage.py)
+  - Option A offline ingest script (like ingest.py), not check-on-
+    every-launch inside preprocessor
+  - \r spinner + threading intro (deferred — concurrency later)
+
+BUGS FOUND / FIXED THIS SESSION (highlights):
+  - exact_match() called with zero args (missing query)
+  - JSON reload every query → moved to module-level load
+  - remove_punctuation list/string iteration traps (same family
+    as query_rewriter char-by-char bug)
+  - fuzzysearch returned key not answer (contract mismatch L1/L2)
+  - vector_search built list-of-matches then compared str==list
+    (always False) — root cause: wrong container for "need ONE"
+  - embedder() missing return; dead `is not list` block revived
+    from embeddings.py history
+  - json.dump(f) missing data arg (storage.py bug family again)
+  - zip(queries, embeddings) vs zip(data, embeddings)
+  - scratch test code at module bottom runs on import
+  - ResponseStructure answer: str vs str|None; f-string/{query};
+    generate() arity; inverted return logic on needs_retrieval
+    (some fixed, L4 still "works with occasional breaks")
+
+EXPLICITLY DEFERRED (do not push unprompted):
+  - Auto-append L4 answers into embed_cache.json
+  - Full semantic cache of arbitrary past real queries
+  - Layer 4 memory (last 15 turns) — prompt ready, not wired
+  - Loading spinner / threading concurrency
+  - GroqClient exception-swallowing (still known from V2)
+  - Categories 5–10, 12–15 of research FAQ dataset (jailbreak,
+    human escalation, meta-conversation that lies about memory, etc.)
+  - Shared util file for remove_punctuation (still duplicated
+    bm25_search.py vs preprocessor.py)
+  - Dedup embedder() — still reimplemented in embed_cache_ingest
+    instead of importing embeddings.py
+
+NOT YET DONE / IMMEDIATE NEXT CANDIDATES:
+  1. Wire preprocessor/query_guard cleanly into main.py
+     (before query_rewriter; short-circuit full pipeline on hit)
+  2. Stabilize L4 (null answer, return contract matches L1–L3,
+     system vs user prompt split if generate() needs 2 args)
+  3. End-to-end test matrix:
+       greeting → L1/L2
+       "what can you do" → L3
+       off-topic → L3 or L4
+       real doc question → fall through to full RAG
+  4. Then resume original V3 plan leftovers:
+       - Retrieval verification (may already overlap reranker threshold)
+       - Answer verification (grounding / hallucination check) — NEW
+
+WHERE WE LEFT OFF:
+  Cascade functionally works. Dev chose not to build auto-grow
+  embed cache. Next session: either harden main.py wiring + L4
+  contract, or move to next V3 piece (answer verification) once
+  the gate is fully in the live loop.
+
     
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RERANKING — BUILT AHEAD OF SCHEDULE THIS SESSION

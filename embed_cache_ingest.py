@@ -36,7 +36,7 @@ def embedder(texts: list[str], task: str = "retrieval.passage"):
         },
     ).json()
 
-    print(result)
+    # print(result)
     if result["data"][0] is not list:
         embeddings = result["data"][0]
     embeddings = [item["embedding"] for item in result["data"]]
