@@ -38,7 +38,7 @@ def rrf_merge(chunk_lists: list[list[str]], k: int = 60, top_k: int = 10) -> lis
 
     rrf_sort = sorted(rrf.items(), key=lambda x: x[1], reverse=True)
     top_results = [chunk for chunk, score in rrf_sort[:top_k]]
-
+    print(f"LENGTH OF TOP RESULTS FROM RRF MERGE: {len(top_results)}")
     return top_results
 
 
