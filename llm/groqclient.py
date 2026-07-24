@@ -21,7 +21,6 @@ class GroqClient:
 
         max_retries = 3
         for i in range(max_retries):
-            
             try:
                 if self.schema is not None:
                     response = self.client.chat.completions.create(

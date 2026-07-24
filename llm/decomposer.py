@@ -1,7 +1,7 @@
 from llm.groqclient import GroqClient
 from llm.queryschema import QueryStructures
 
-decomposer = GroqClient(model="openai/gpt-oss-120b", output_schema=QueryStructures)
+decomposer = GroqClient(model="openai/gpt-oss-20b", output_schema=QueryStructures)
 
 
 def query_decomposer(query):  # SUB QUERY DECOMPOSITION
