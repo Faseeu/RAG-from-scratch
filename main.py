@@ -9,6 +9,8 @@ from search.rrf_merge import rrf_merge
 from search.reranker import rerank
 from llm.query_rewriter import query_rewriter
 from guard.preprocessor import preprocessor
+from verify.answerschema import AnswerStructure, Citation
+
 
 # from pprint import pprint
 from llm.decomposer import query_decomposer
@@ -23,7 +25,7 @@ def main():
     # print(tex)
     # ingest()
     turn = 0
-    client = GroqClient(model="llama-3.3-70b-versatile")
+    client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
     bm25 = BM25()
 
     while True:
@@ -102,7 +104,17 @@ def main():
                 memory = {}
             prompt = prompt_builder(user_query, full_query_chunks, memory)
             # print(prompt)
-            response = client.generate(prompt)
+            resp = client.generate(prompt)
+            validated = AnswerStructure.model_validate_json(resp)
+            citations_list = []
+            for citation in AnswerStructure.citations:
+                validated_citation = Citation.model_validate_json(validated.citations)
+                citation_dict = {
+                    "chunk_id": validated_citation.chunk_id,
+                    "quote": validated_citation.quote,
+                }
+                citations_list.extend(citation_dict)
+            response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
             mem = {"question": user_query, "answer": response}
             conMemory("store", mem)

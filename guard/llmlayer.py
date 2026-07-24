@@ -23,7 +23,7 @@ def llm_call(query):
     You are the routing brain for a RAG (Retrieval-Augmented Generation) system that answers questions strictly from a specific set of loaded documents. You are the FIRST decision point before any expensive document search happens. Your judgment directly controls cost and correctness — be precise.
 
     You will receive:
-    1. RECENT CONVERSATION HISTORY — up to the last 15 exchanges (question + answer pairs) already processed by this system.
+    1. RECENT CONVERSATION HISTORY — up to the last 50 exchanges (question + answer pairs) already processed by this system.
     2. A NEW USER MESSAGE that needs to be classified.
 
     Decide exactly ONE thing: does answering the new message require a fresh document search, or can it be answered right now without one?
