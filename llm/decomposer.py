@@ -1,5 +1,5 @@
 from llm.groqclient import GroqClient
-from llm.baseschema import QueryStructures
+from llm.queryschema import QueryStructures
 
 decomposer = GroqClient(model="openai/gpt-oss-120b", output_schema=QueryStructures)
 

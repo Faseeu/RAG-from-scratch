@@ -9,7 +9,7 @@ import requests
 load_dotenv()  # reads .env file and loads all variables
 
 API_KEY = os.getenv("JINA_API_KEY")
-file = "data/aq_enteries.json"
+file = "data/faq_enteries.json"
 
 
 def load(filename=file):
