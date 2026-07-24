@@ -8,11 +8,11 @@ def quote_search(quote: str, chunks: list[str]):
         score = fuzz.partial_ratio(quote, chunk)
         scores.append(score)
         print(score)
-    print(scores)
+    # print(scores)
     max_score = max(scores)
     best_index = scores.index(max_score)
     best_match = chunks[best_index]
-    print(best_match)
+    # print(best_match)
     return best_index, max_score
 
 
