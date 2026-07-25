@@ -15,7 +15,6 @@ from verify.quote_score import quote_score
 
 # from pprint import pprint
 
-
 # TODO: V4 and V5
 def main():
     # print("Hello from rag-from-scratch!")
