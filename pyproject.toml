@@ -24,3 +24,6 @@ explicit = true
 
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
+
+[tool.ruff.lint]
+extend-select = ["I"]   

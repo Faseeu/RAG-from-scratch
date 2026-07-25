@@ -1,5 +1,7 @@
-from groq import Groq, RateLimitError, APIConnectionError, APIStatusError
 import time
+
+from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
+
 # from dotenv import load_dotenv
 # import os
 # import json
@@ -55,13 +57,11 @@ class GroqClient:
 
             except APIConnectionError as e:
                 raise RuntimeError(
-                    f"API CONNECTION ERROR: {str(e)} \n MAYBE TRY AGAIN"
+                    f"API CONNECTION ERROR: {e!s} \n MAYBE TRY AGAIN"
                 ) from e
             except APIStatusError as e:
                 raise RuntimeError(
-                    f"API STATUS ERROR: {str(e)} \n THE PROBLEM SEEMS SEVERE"
+                    f"API STATUS ERROR: {e!s} \n THE PROBLEM SEEMS SEVERE"
                 ) from e
             except Exception as e:
-                raise RuntimeError(
-                    f"Error: LLM API failed with message: {str(e)}"
-                ) from e
+                raise RuntimeError(f"Error: LLM API failed with message: {e!s}") from e

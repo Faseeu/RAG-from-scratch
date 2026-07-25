@@ -1,21 +1,22 @@
 from core.retriever import retriever
-from core.ingest import ingest
-from llm.groqclient import GroqClient
-from prompt_builder import prompt_builder
-from memory import conMemory
-from search.bm25_search import BM25
-from search.rrf_merge import rrf_merge
-
-from search.reranker import rerank
-from llm.query_rewriter import query_rewriter
 from guard.preprocessor import preprocessor
-from verify.answerschema import AnswerStructure, Citation
-
-
-# from pprint import pprint
 from llm.decomposer import query_decomposer
 
+# from core.ingest import ingest
+from llm.groqclient import GroqClient
+from llm.query_rewriter import query_rewriter
+from memory import conMemory
+from prompt_builder import prompt_builder
+from search.bm25_search import BM25
+from search.reranker import rerank
+from search.rrf_merge import rrf_merge
+from verify.answerschema import AnswerStructure
+from verify.quote_score import quote_score
 
+# from pprint import pprint
+
+
+# TODO: V4 and V5
 def main():
     # print("Hello from rag-from-scratch!")
     # text = load_textfile("./basic_ai.txt")
@@ -107,12 +108,18 @@ def main():
             resp = client.generate(prompt)
             validated = AnswerStructure.model_validate_json(resp)
             citations_list = []
+            citation_verified = []
             for citation in validated.citations:
-                validated_citation = Citation.model_validate_json(citation)
+                # validated_citation = Citation.model_validate(citation)
                 citation_dict = {
-                    "chunk_id": validated_citation.chunk_id,
-                    "quote": validated_citation.quote,
+                    "chunk_id": citation.chunk_id,
+                    "quote": citation.quote,
                 }
+                quote_check = quote_score(
+                    citation.quote, full_query_chunks[citation.chunk_id]
+                )
+                citation_verified.append(quote_check)
+
                 citations_list.append(citation_dict)
             response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
@@ -121,6 +128,12 @@ def main():
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
             print(f"Response:\n{response}")
+            for score in citation_verified:
+                if score is None:
+                    print("⚠️ The Checked failed")
+                print(
+                    f"✅ Chunk ID: {citation_verified.index(score)} \nScore: {score:.2f}"
+                )
 
 
 if __name__ == "__main__":
