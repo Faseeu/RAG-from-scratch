@@ -1,8 +1,10 @@
 import json
 import string
-from rapidfuzz import process, fuzz
+
+from rapidfuzz import fuzz, process
+
 from core.cosine_similarity import cosine_similarity
-from guard.embed_cache_ingest import load, embedder
+from guard.embed_cache_ingest import embedder, load
 from guard.llmlayer import llm_call
 
 filename = "data/basic_greets.json"

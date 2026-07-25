@@ -1,8 +1,10 @@
-from core.storage import load
 import string
 
 # import BM25
 from rank_bm25 import BM25Okapi
+
+from core.storage import load
+
 # from pprint import pprint
 
 

@@ -1,5 +1,6 @@
 from llm.groqclient import GroqClient
 from llm.queryschema import QueryStructures
+
 # from dotenv import load_dotenv
 # import os
 
@@ -14,7 +15,7 @@ def query_rewriter(query: str, extra_instructions: str):
     imp_instructions = """
     Create the query in 4 different versions
     The goal is to diversify the query
-    Think of it like asking 4 different people to search for the same thing, each with a different mindset. 
+    Think of it like asking 4 different people to search for the same thing, each with a different mindset.
     You're not changing what the user wants.
     You're changing the lens
 
@@ -25,10 +26,10 @@ def query_rewriter(query: str, extra_instructions: str):
     """
 
     rewriter_prompt = f"""
-    Rewrite the given query to make it more suitable for 
+    Rewrite the given query to make it more suitable for
     - RAG
 
-    Keep it concise. 
+    Keep it concise.
     Dont write any preamble.
     Dont write anything besides the query
     Never ever add any other sort of text or "```" around the query

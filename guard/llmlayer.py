@@ -1,6 +1,7 @@
 # llmlayer.py
-from llm.groqclient import GroqClient
 from pydantic import BaseModel, ConfigDict
+
+from llm.groqclient import GroqClient
 from memory import conMemory
 
 

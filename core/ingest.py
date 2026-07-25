@@ -1,7 +1,7 @@
-from core.loader import load_textfile
-from core.text_chunker import split_into_chunks
 from core.embedding import embed
+from core.loader import load_textfile
 from core.storage import store
+from core.text_chunker import split_into_chunks
 
 
 def ingest(filename="./basic_ai.txt", batch_size=128):
