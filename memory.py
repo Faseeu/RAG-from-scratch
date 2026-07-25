@@ -1,5 +1,4 @@
 import json
-from pprint import pprint
 
 
 def _read_memory(filename):
@@ -22,8 +21,10 @@ def conMemory(mode="store", memory=None, filename="conversation_memory.json"):
     elif mode == "load":
         full_memory = _read_memory(filename)
         # pprint(full_memory[:-5])
-        # return full_memory[-5:]
-        return full_memory
+        return full_memory[-12:]
+        # return full_memory
 
 
-# pprint(conMemory("load"))
+# mem = conMemory("load")
+# print(mem)
+# print(len(mem))
