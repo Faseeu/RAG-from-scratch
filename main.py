@@ -127,11 +127,13 @@ def main():
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
             print(f"Response:\n{response}")
-            for score in citation_verified:
+            for citations_dict,score in (citations_list,citation_verified):
+
                 if score is None:
-                    print("⚠️ The Checked failed")
+                    print(f"⚠️ The Checked failed for chunk {citation_dict['chunk_id']}")
+                    continue
                 print(
-                    f"✅ Chunk ID: {citation_verified.index(score)} \nScore: {score:.2f}"
+                    f"✅ Chunk ID: {citation_dict['chunk_id']} \nScore: {score:.2f}"
                 )
 
 
