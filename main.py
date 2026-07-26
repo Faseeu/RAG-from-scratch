@@ -15,6 +15,7 @@ from verify.quote_score import quote_score
 
 # from pprint import pprint
 
+
 # TODO: V4 and V5
 def main():
     # print("Hello from rag-from-scratch!")
@@ -83,7 +84,6 @@ def main():
                     keyword_chunks.append(chunk)
                     print(len(keyword_chunks))
 
-                # # why is there a game of thrones refereance in the book.also how would i recover when my coding habits breakdown from trauma or soemthing like addiction
                 # print(vector_chunks)
                 # print(keyword_chunks)
                 all_chunks = vector_chunks + keyword_chunks
