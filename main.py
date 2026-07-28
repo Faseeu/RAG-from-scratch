@@ -5,7 +5,7 @@ from llm.decomposer import query_decomposer
 # from core.ingest import ingest
 from llm.groqclient import GroqClient
 from llm.query_rewriter import query_rewriter
-from memory import conMemory
+from memory import resume_or_create_session
 from prompt_builder import prompt_builder
 from search.bm25_search import BM25
 from search.reranker import rerank
@@ -28,7 +28,9 @@ def main():
     turn = 0
     client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
     bm25 = BM25()
-
+    # convo_name = input("What do you want to name this conversation? :\n")
+    # ConMemory = ConversationMemory(session_id="1", session_name=convo_name)
+    ConMemory = resume_or_create_session()
     while True:
         turn += 1
         user_query: str = input("Enter your QUERY: \n")
@@ -98,10 +100,11 @@ def main():
                 print(f"LENGTH OF TOP CHUNKS(ReRanked): {len(top_chunks)}")
 
                 full_query_chunks.extend(top_chunks)
-            if turn != 1:
-                memory = conMemory("load")
-            else:
-                memory = {}
+            # if turn != 1:
+            # memory = conMemory("load")
+            memory = ConMemory.load()
+            # else:
+            #     memory = {}
             prompt = prompt_builder(user_query, full_query_chunks, memory)
             # print(prompt)
             resp = client.generate(prompt)
@@ -123,18 +126,17 @@ def main():
             response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
             mem = {"question": user_query, "answer": response}
-            conMemory("store", mem)
+            # conMemory("store", mem)
+
+            ConMemory.store(mem)
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
             print(f"Response:\n{response}")
-            for citations_dict,score in (citations_list,citation_verified):
-
+            for citations_dict, score in zip(citations_list, citation_verified):
                 if score is None:
                     print(f"⚠️ The Checked failed for chunk {citation_dict['chunk_id']}")
                     continue
-                print(
-                    f"✅ Chunk ID: {citation_dict['chunk_id']} \nScore: {score:.2f}"
-                )
+                print(f"✅ Chunk ID: {citation_dict['chunk_id']} \nScore: {score:.2f}")
 
 
 if __name__ == "__main__":
