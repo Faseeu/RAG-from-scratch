@@ -2,7 +2,7 @@
 from pydantic import BaseModel, ConfigDict
 
 from llm.groqclient import GroqClient
-from memory import conMemory
+from memory import ConversationMemory
 
 
 class ResponseStructure(BaseModel):
@@ -13,8 +13,8 @@ class ResponseStructure(BaseModel):
 
 layer4 = GroqClient(model="openai/gpt-oss-20b", output_schema=ResponseStructure)
 
-formatted_history = conMemory("load")
-formatted_history = "".join(
+formatted_history = ConversationMemory.load()
+formatted_history = "\n".join(
     str({memory["question"]: memory["answer"]}) for memory in formatted_history
 )
 
