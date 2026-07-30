@@ -23,6 +23,7 @@ def query_rewriter(query: str, extra_instructions: str):
     - Broaden(Zoom out):    Make the query more general/high-level
     - Narrow (zoom in):     Make the query more specific — add assumed detail
     - Perspective shift:    Ask it as if from a different angle e.g. "what would the answer look like", or a related sub-topic/assumption
+
     """
 
     rewriter_prompt = f"""
@@ -38,6 +39,10 @@ def query_rewriter(query: str, extra_instructions: str):
     No need for greetings or goodbyes or his hellos
     Be cold and highly precise.
     Never add anything unecessary.
+    Never write any preamble
+    Never write section dividers
+    Always only write the 4 queries as you are instructed
+    Nothing more than that
     Here is the QUERY:
     {query}
     Very Important instructions:

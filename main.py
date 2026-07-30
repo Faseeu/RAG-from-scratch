@@ -1,3 +1,4 @@
+from core.contextualize_query import contextualize_query
 from core.retriever import retriever
 from guard.preprocessor import preprocessor
 from llm.decomposer import query_decomposer
@@ -33,6 +34,7 @@ def main():
     ConMemory = resume_or_create_session()
     while True:
         turn += 1
+        memory = ConMemory.load()
         user_query: str = input("Enter your QUERY: \n")
         if (
             user_query == "q"
@@ -44,12 +46,18 @@ def main():
         # Here I seperated the vector and BM25 query rewriting because what
         # They require are opposites
         #
-        preprocessed = preprocessor(user_query)
+        preprocessed = preprocessor(user_query, memory)
         if preprocessed is not None:
             print(f"Response from 4 layers:\n{preprocessed}")
         else:
-            decomposed_query = query_decomposer(user_query)
+            # memory = ConMemory.load()
+            context_query = contextualize_query(user_query, memory)
+
+            decomposed_query = query_decomposer(context_query)  # Had user query before
             full_query_chunks = []
+            print(f"RAW QUERY:\n{user_query}")
+            print(f"CONTEXTUALIZED QUERY:\n{context_query}")
+            print(f"DECOMPOSED QUERIES:\n{decomposed_query}")
             for query in decomposed_query:
                 # query = user_query
                 vector_query_list = query_rewriter(
@@ -96,7 +104,7 @@ def main():
                 top_chunks = rerank(query, top_chunks)
                 # print(vector_chunks)
                 # print(keyword_chunks)
-                print(f"Top Chunks(ReRanked): {top_chunks}")
+                # print(f"Top Chunks(ReRanked): {top_chunks}")
                 print(f"LENGTH OF TOP CHUNKS(ReRanked): {len(top_chunks)}")
 
                 full_query_chunks.extend(top_chunks)
@@ -105,7 +113,9 @@ def main():
             memory = ConMemory.load()
             # else:
             #     memory = {}
-            prompt = prompt_builder(user_query, full_query_chunks, memory)
+            prompt = prompt_builder(
+                context_query, full_query_chunks, memory
+            )  # Had user_query
             # print(prompt)
             resp = client.generate(prompt)
             validated = AnswerStructure.model_validate_json(resp)
@@ -125,7 +135,7 @@ def main():
                 citations_list.append(citation_dict)
             response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
-            mem = {"question": user_query, "answer": response}
+            mem = {"question": context_query, "answer": response}  # Had user_query
             # conMemory("store", mem)
 
             ConMemory.store(mem)

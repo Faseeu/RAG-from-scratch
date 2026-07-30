@@ -2,7 +2,8 @@
 from pydantic import BaseModel, ConfigDict
 
 from llm.groqclient import GroqClient
-from memory import ConversationMemory
+
+# from memory import ConversationMemory
 
 
 class ResponseStructure(BaseModel):
@@ -13,13 +14,13 @@ class ResponseStructure(BaseModel):
 
 layer4 = GroqClient(model="openai/gpt-oss-20b", output_schema=ResponseStructure)
 
-formatted_history = ConversationMemory.load()
-formatted_history = "\n".join(
-    str({memory["question"]: memory["answer"]}) for memory in formatted_history
-)
+# formatted_history = ConversationMemory().load()
 
 
-def llm_call(query):
+def llm_call(query, history):
+    formatted_history = "\n".join(
+        str({memory["question"]: memory["answer"]}) for memory in history
+    )
     prompt = f"""
     You are the routing brain for a RAG (Retrieval-Augmented Generation) system that answers questions strictly from a specific set of loaded documents. You are the FIRST decision point before any expensive document search happens. Your judgment directly controls cost and correctness — be precise.
 

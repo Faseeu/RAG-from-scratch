@@ -13,7 +13,7 @@ with open(filename, "r") as f:
 faq_enteries = load()
 
 
-def preprocessor(query: str):
+def preprocessor(query: str, history):
     query = remove_puncutation(query)
     simple = exact_match(query)
     if simple is not None:
@@ -27,7 +27,7 @@ def preprocessor(query: str):
     if vector is not None:
         return vector
     print("\r✅ Query embedded!      ")
-    llm = llm_call(query)
+    llm = llm_call(query, history=history)
     if llm is not None:
         return llm
 

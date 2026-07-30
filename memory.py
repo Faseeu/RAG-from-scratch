@@ -47,6 +47,7 @@ class ConversationMemory:
         self.session_name = (
             input("Enter a SESSION NAME:- \n") if session_name == "" else session_name
         )
+        # self.session_name = session_name
 
         if created_at is None:
             self.created_at = datetime.now()
@@ -68,6 +69,9 @@ class ConversationMemory:
         #     self.filepath.touch(exist_ok=True)
         self.history = self._load_once()
         catalog = SessionsIndex()
+        print(
+            f"REGISTERING: id={self.session_id}, name={self.session_name}, created={self.created_at}"
+        )
         catalog.register(
             session_id=self.session_id,
             session_name=self.session_name,
@@ -168,7 +172,7 @@ class SessionsIndex:
 
 def resume_or_create_session():
     option = input(
-        "Enter 'n' if you want to create a new session\nEnter 'r' if you wna to resume an older one"
+        "Enter 'n' if you want to create a new session:\t\nEnter 'r' if you wna to resume an older one:\t"
     )
     if option == "n":
         session_name = input("What do you want to name this conversation? :\n")
@@ -184,7 +188,7 @@ def resume_or_create_session():
         Session Number: {i}  -- Session Name: {name}
         Session ID:    {sid} -- Created at:  {created_at}
             """)
-        session_num = int(input("Enter the Session Number you want to resume"))
+        session_num = int(input("Enter the Session Number you want to resume:\t"))
         chosen_session = sessions[session_num]
         name = chosen_session["session_name"]
         sid = chosen_session["session_id"]
