@@ -4,6 +4,7 @@ __pycache__
 .env
 .python
 .vscode/
+.vscode
 # ===========================
 # SECRETS — never commit these
 # ===========================
@@ -19,7 +20,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-
+epubtotxt.py
 # virtual environments
 venv/
 .venv/
@@ -33,6 +34,8 @@ ENV/
 RAG.json        # or be specific, just ignore your vector store
 
 sessions/*.json
+Fluent_Python.txt
+conversation_memory.json
 # ===========================
 # VSCODIUM / VSCODE
 # ===========================
@@ -61,8 +64,9 @@ desktop.ini
 *.tmp
 *.swp
 
-RAG.json
-conversation_memory.json
+
+
 Fluent Python.txt
-epubtotxt.py
+
 sessions/20260728_090135yo.json
+sessions
