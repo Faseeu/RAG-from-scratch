@@ -68,15 +68,6 @@ class ConversationMemory:
         # if self.filepath.exists() is not True:
         #     self.filepath.touch(exist_ok=True)
         self.history = self._load_once()
-        catalog = SessionsIndex()
-        print(
-            f"REGISTERING: id={self.session_id}, name={self.session_name}, created={self.created_at}"
-        )
-        catalog.register(
-            session_id=self.session_id,
-            session_name=self.session_name,
-            created_at=self.created_at.strftime("%Y-%m-%dT%H:%M:%S"),
-        )
 
     def load(self, complete: bool = False):
         """Reads memory from history"""
@@ -150,7 +141,8 @@ class SessionsIndex:
             "created_at": created_at,
         }
 
-        if session not in full_catalog:
+        existing_ids = [entry["session_id"] for entry in full_catalog]
+        if session_id not in existing_ids:
             full_catalog.append(session)
             with open(self.filepath, "w") as f:
                 json.dump(full_catalog, f)
@@ -171,12 +163,24 @@ class SessionsIndex:
 
 
 def resume_or_create_session():
+    time_fmt = "%Y-%m-%dT%H:%M:%S.%f"
     option = input(
         "Enter 'n' if you want to create a new session:\t\nEnter 'r' if you wna to resume an older one:\t"
     )
     if option == "n":
         session_name = input("What do you want to name this conversation? :\n")
-        return ConversationMemory(session_name=session_name)
+
+        newSession = ConversationMemory(session_name=session_name)
+        catalog = SessionsIndex()
+        print(
+            f"REGISTERING: id={newSession.session_id}, name={newSession.session_name}, created={newSession.created_at}"
+        )
+        catalog.register(
+            session_id=newSession.session_id,
+            session_name=newSession.session_name,
+            created_at=newSession.created_at.strftime(time_fmt),
+        )
+        return newSession
     elif option == "r":
         catalog = SessionsIndex()
         sessions = catalog.show()
@@ -192,9 +196,7 @@ def resume_or_create_session():
         chosen_session = sessions[session_num]
         name = chosen_session["session_name"]
         sid = chosen_session["session_id"]
-        created_at = datetime.strptime(
-            chosen_session["created_at"], "%Y-%m-%dT%H:%M:%S"
-        )
+        created_at = datetime.strptime(chosen_session["created_at"], time_fmt)
 
         return ConversationMemory(
             session_id=sid, session_name=name, created_at=created_at
