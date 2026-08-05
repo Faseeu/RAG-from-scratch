@@ -9,9 +9,11 @@ from core.storage import load
 
 
 class BM25:
-    def __init__(self, filename="data/RAG.json"):
-        data = load(filename)
-        self.corpus = [vector["chunk"] for vector in data]
+    def __init__(self, corpus=None, filename="data/RAG.json"):
+        if corpus is None:
+            data = load(filename)
+            self.corpus = [vector["chunk"] for vector in data]
+        self.corpus = corpus
         self.tk_corpus = self.tokenize(self.corpus)
         self.bm25 = BM25Okapi(self.tk_corpus)
 

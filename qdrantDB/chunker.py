@@ -1,7 +1,14 @@
 def split_into_chunks(text: str, size: int = 200, overlap: int = 20) -> list[str]:
     chunks: list[str] = []
-    words: list[str] = text.split()
-
+    words: list[str] = text.split(" ")
+    break_points = [
+        r"\n\n",
+        r"\n#",
+        r"CHAPTER",
+        r"(\n\s*)([A-Z][A-Z\s]*)(\n\s*)",
+        r"\n\s*",
+        
+    ]
     step: int = size - overlap
 
     i = 0

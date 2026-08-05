@@ -1,0 +1,62 @@
+from qdrant_client import QdrantClient, models
+
+from core.embedding import embed
+
+client = QdrantClient(host="localhost", port=6333)
+
+
+def retrieve(
+    query: str,
+    filter=None,
+    threshold=0.65,
+    top_k: int = 10,
+    collection_name="atomic_habits",
+):
+    if filter is None:
+        filter = {"title": "atomic_habits"}
+    filterKey: str
+    filterValue: str
+    for key, value in filter.items():
+        filterKey = key
+        filterValue = value
+
+    query_embed = embed([query], task="retrieval.query")[0]
+    results = client.query_points(
+        collection_name=collection_name,
+        query=query_embed,
+        query_filter=models.Filter(
+            must=[
+                models.FieldCondition(
+                    key=filterKey, match=models.MatchValue(value=filterValue)
+                )
+            ]
+        ),
+        score_threshold=threshold,
+        limit=top_k,
+    )
+    chunks: list[str] = []
+    metadata: list[dict] = []
+    for point in results.points:
+        chunks.append(point.payload["text"])
+        metadata.append(point.payload)
+    return chunks, metadata
+
+
+def get_corpus_from_qdrant(collection_name):
+    all_chunks = []
+    next_page = None
+    while True:
+        records, next_page = client.scroll(
+            collection_name=collection_name,
+            limit=10000,
+            with_payload=True,
+            with_vectors=False,
+        )
+        all_chunks.extend([r.payload["text"] for r in records])
+
+        if next_page is None:
+            break
+    return all_chunks
+
+
+query = "what is the maining of life"

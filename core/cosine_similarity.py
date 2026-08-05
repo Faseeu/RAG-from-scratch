@@ -1,5 +1,11 @@
 from math import sqrt
 
+# cosine similarity = A . B / |A| x |B|
+# A is a vector (meaning a list of floats)
+# B is the same as A
+# |A| is magnitude(meaninig it is just the strength)
+#  I remember these from high school physics
+
 
 def cosine_similarity(query_embed, chunk_embed):
 

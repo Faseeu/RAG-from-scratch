@@ -10,6 +10,7 @@ dependencies = [
     "groq>=1.5.0",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
+    "qdrant-client>=1.18.0",
     "rank-bm25>=0.2.2",
     "rapidfuzz>=3.14.5",
     "requests>=2.34.2",
