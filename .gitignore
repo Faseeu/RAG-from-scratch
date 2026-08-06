@@ -32,7 +32,7 @@ ENV/
 # ===========================
 *.json          # remove this line if you want to commit other JSONs
 RAG.json        # or be specific, just ignore your vector store
-
+data/
 sessions/*.json
 Fluent_Python.txt
 conversation_memory.json
