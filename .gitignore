@@ -36,6 +36,8 @@ data/
 sessions/*.json
 Fluent_Python.txt
 conversation_memory.json
+utils/
+utils
 # ===========================
 # VSCODIUM / VSCODE
 # ===========================
@@ -70,3 +72,7 @@ Fluent Python.txt
 
 sessions/20260728_090135yo.json
 sessions
+RAG-from-scratch_notebook.ipynb
+
+RAG-from-scratch_report.html
+# python3 utils/notebook_generator.py --html
