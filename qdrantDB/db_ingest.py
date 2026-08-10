@@ -1,13 +1,17 @@
 import uuid
 
+from chunker import token_chunk
 from qdrant_client import QdrantClient, models
 
 from core.embedding import embed
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
-from core.text_chunker import split_into_chunks, token_chunk
+from core.text_chunker import split_into_chunks
 
 client = QdrantClient(host="localhost", port=6333)
+# sudo docker run -p 6333:6333 -p 6334:6334 \
+# -v $(pwd)/qdrant_storage:/qdrant/storage \
+# qdrant/qdrant
 
 
 NAMESPACE = uuid.UUID(
@@ -17,6 +21,7 @@ NAMESPACE = uuid.UUID(
 
 def generate_id(text: str) -> str:
     return str(uuid.uuid5(NAMESPACE, text))
+
 
 # /home/faseeh/projects/RAG-from-scratch/.venv/bin/python /home/faseeh/projects/RAG-from-scratch/qdrantDB/ingest.py
 class Ingest:
@@ -31,14 +36,15 @@ class Ingest:
 
         self.text = text
         self.collection_name = collection_name
+        self.filename = filename
         if mode == "pdf":
             parser = PDFParser(self.filename)
             self.parsed = parser.parse()
             self.collection_name = parser.book_title
+            print(self.collection_name)
 
         self.mode = mode
 
-        self.filename = filename
         self.batch_size = batch_size
 
     def ingest_text(self):
@@ -96,8 +102,7 @@ class Ingest:
                 ),
             )
 
-        for chunk, embedding in zip(chunks, all_embeddings):
-            metadata = self.parsed
+        for metadata, (chunk, embedding) in zip(chunked, zip(chunks, all_embeddings)):
             client.upsert(
                 collection_name=self.collection_name,
                 points=[
@@ -168,3 +173,4 @@ class Ingest:
 
 filename = "data/Asimov_the_foundation.pdf"
 i = Ingest(mode="pdf", filename=filename)
+i.ingest_pdf()

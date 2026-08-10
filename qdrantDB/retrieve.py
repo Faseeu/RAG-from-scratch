@@ -10,10 +10,10 @@ def retrieve(
     filter=None,
     threshold=0.65,
     top_k: int = 10,
-    collection_name="atomic_habits",
+    collection_name="The Foundation Trilogy",
 ):
     if filter is None:
-        filter = {"title": "atomic_habits"}
+        filter = {"title": "The Foundation Trilogy"}
     filterKey: str
     filterValue: str
     for key, value in filter.items():
@@ -59,4 +59,6 @@ def get_corpus_from_qdrant(collection_name):
     return all_chunks
 
 
-query = "what is the maining of life"
+query = "what is the empire"
+chunks ,meta=retrieve(query)
+print(meta)

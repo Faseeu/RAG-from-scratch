@@ -193,7 +193,7 @@ class PDFParser:
 parser = PDFParser("data/Asimov_the_foundation.pdf")
 # print(parser.parse())
 parser.parse()
-
+print(parser.book_title)
 # import time
 
 # doc = pymupdf.open("data/Asimov_the_foundation.pdf")

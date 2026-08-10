@@ -21,10 +21,13 @@ def embed(texts: list[str], task: str = "retrieval.passage") -> list[list[float]
         },
     ).json()
     # print(result)
+
     if result["data"][0] is not list:
         embeddings = result["data"][0]
     embeddings = [item["embedding"] for item in result["data"]]
+    import time
 
+    time.sleep(15)
     return embeddings
 
 
