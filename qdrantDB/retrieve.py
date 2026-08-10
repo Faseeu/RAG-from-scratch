@@ -20,7 +20,7 @@ def retrieve(
         filterKey = key
         filterValue = value
 
-    query_embed = embed([query], task="retrieval.query")[0]
+    query_embed = embed([query], task="retrieval.query",mode = "local")[0]
     results = client.query_points(
         collection_name=collection_name,
         query=query_embed,
