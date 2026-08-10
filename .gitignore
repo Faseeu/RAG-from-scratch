@@ -76,3 +76,7 @@ RAG-from-scratch_notebook.ipynb
 
 RAG-from-scratch_report.html
 # python3 utils/notebook_generator.py --html
+qdrant_storage/
+qdrant_storage
+pdf-forge-exports/
+pdf-forge-exports

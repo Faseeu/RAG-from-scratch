@@ -60,7 +60,7 @@ class Ingest:
             client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
-                    size=512, distance=models.Distance.COSINE
+                    size=384, distance=models.Distance.COSINE
                 ),
             )
 
@@ -98,7 +98,7 @@ class Ingest:
             client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
-                    size=512, distance=models.Distance.COSINE
+                    size=384, distance=models.Distance.COSINE
                 ),
             )
 
@@ -121,7 +121,8 @@ class Ingest:
         all_embeddings = []
         for i in range(0, len(chunks), self.batch_size):
             batch: list[str] = chunks[i : i + self.batch_size]
-            batch_embeddings = embed(batch, "retrieval.passage")
+            # batch_embeddings = embed(batch, "retrieval.passage")
+            batch_embeddings = embed(batch, mode="local")
             all_embeddings.extend(batch_embeddings)
         return all_embeddings
 

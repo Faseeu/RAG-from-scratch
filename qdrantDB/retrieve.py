@@ -60,5 +60,5 @@ def get_corpus_from_qdrant(collection_name):
 
 
 query = "what is the empire"
-chunks ,meta=retrieve(query)
+chunks, meta = retrieve(query)
 print(meta)
