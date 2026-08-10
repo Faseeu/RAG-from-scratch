@@ -17,7 +17,7 @@ model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", token=token)
 
 
 def rerank(
-    query: str, chunks: list[str], top_k: int = 3, threshold: int = -5
+    query: str, chunks: list[str], top_k: int = 3, threshold: int = 0.5
 ) -> list[str]:
 
     pairs = []
