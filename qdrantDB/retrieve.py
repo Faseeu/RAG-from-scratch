@@ -1,4 +1,4 @@
-from qdrant_client import QdrantClient, models
+from qdrant_client import QdrantClient
 
 from core.embedding import embed
 
@@ -8,7 +8,7 @@ client = QdrantClient(host="localhost", port=6333)
 def retrieve(
     query: str,
     filter=None,
-    threshold=0.65,
+    threshold=0.4,
     top_k: int = 10,
     collection_name="The Foundation Trilogy",
 ):
@@ -37,7 +37,7 @@ def retrieve(
     chunks: list[str] = []
     metadata: list[dict] = []
     for point in results.points:
-        chunks.append(point.payload["text"])
+        chunks.append(point.payload["page_text"])
         metadata.append(point.payload)
     return chunks, metadata
 
@@ -52,7 +52,7 @@ def get_corpus_from_qdrant(collection_name):
             with_payload=True,
             with_vectors=False,
         )
-        all_chunks.extend([r.payload["text"] for r in records])
+        all_chunks.extend([r.payload["page_text"] for r in records])
 
         if next_page is None:
             break

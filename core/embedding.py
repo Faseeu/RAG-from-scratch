@@ -4,11 +4,10 @@ import requests
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 load_dotenv()  # reads .env file and loads all variables
 
 API_KEY = os.getenv("JINA_API_KEY")
-
+model = SentenceTransformer("Snowflake/snowflake-arctic-embed-s")
 
 def embed(
     texts: list[str], task: str = "retrieval.passage", mode="jina"
@@ -34,7 +33,9 @@ def embed(
         time.sleep(10)
         return embeddings
     elif mode == "local":
-        embeddings = model.encode(texts).tolist()
+        prompt_name = "query" if task == "retrieval.query" else None
+
+        embeddings = model.encode(texts, prompt_name=prompt_name).tolist()
 
         return embeddings
 

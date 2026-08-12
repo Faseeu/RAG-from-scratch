@@ -51,7 +51,7 @@ class Ingest:
 
         if self.text is None:
             text: str = load_textfile(self.filename)
-        chunks: list[str] = split_into_chunks(text)
+        chunks: list[str] = split_into_chunks(self.text)
         all_embeddings: list[list[float]] = self._batch_embed(chunks)
         # chunks_with_vectors: list[dict] = []
         self._print_logs(chunks, all_embeddings)
