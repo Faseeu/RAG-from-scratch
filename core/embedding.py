@@ -34,7 +34,7 @@ def embed(
         time.sleep(10)
         return embeddings
     elif mode == "local":
-        embeddings = model.encode(texts)
+        embeddings = model.encode(texts).tolist()
 
         return [embeddings]
 
