@@ -47,10 +47,17 @@ def token_chunk(
         clean = re.sub(r"\s+", " ", text).strip()
         chunks = chunker(clean)
         for i, c in enumerate(chunks):
-            chunk_payload = page.copy()
-            chunk_payload["page_text"] = c.text
-            chunk_payload["token_count"] = c.token_count
-            chunk_payload["chunk_index"] = i
+            # chunk_payload = page.copy()
+            chunk_payload = {
+                "text": c.text,
+                "page_no": page["page_no"],
+                "book_title": page["book_title"],
+                "source": page["source"],
+                "token_count": c.token_count,
+                "confidence": page["confidence"],
+                "chunk_index": i,
+            }
+
             chunked.append(chunk_payload)
     # print(chunked)
     print(len(chunked))
