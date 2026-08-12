@@ -36,7 +36,7 @@ def embed(
     elif mode == "local":
         embeddings = model.encode(texts).tolist()
 
-        return [embeddings]
+        return embeddings
 
 
 # batch_size = 128

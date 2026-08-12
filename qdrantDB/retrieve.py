@@ -12,25 +12,25 @@ def retrieve(
     top_k: int = 10,
     collection_name="The Foundation Trilogy",
 ):
-    if filter is None:
-        filter = {"title": "The Foundation Trilogy"}
-    filterKey: str
-    filterValue: str
-    for key, value in filter.items():
-        filterKey = key
-        filterValue = value
+    # if filter is None:
+    #     filter = {"title": "The Foundation Trilogy"}
+    # filterKey: str
+    # filterValue: str
+    # for key, value in filter.items():
+    #     filterKey = key
+    #     filterValue = value
 
     query_embed = embed([query], task="retrieval.query", mode="local")[0]
     results = client.query_points(
         collection_name=collection_name,
         query=query_embed,
-        query_filter=models.Filter(
-            must=[
-                models.FieldCondition(
-                    key=filterKey, match=models.MatchValue(value=filterValue)
-                )
-            ]
-        ),
+        # query_filter=models.Filter(
+        #     must=[
+        #         models.FieldCondition(
+        #             key=filterKey, match=models.MatchValue(value=filterValue)
+        #         )
+        #     ]
+        # ),
         score_threshold=threshold,
         limit=top_k,
     )
@@ -59,6 +59,7 @@ def get_corpus_from_qdrant(collection_name):
     return all_chunks
 
 
-query = "who haut rodric"
+query = "who is haut rodric"
 chunks, meta = retrieve(query)
 print(meta)
+print(chunks)
