@@ -20,7 +20,7 @@ def retrieve(
         filterKey = key
         filterValue = value
 
-    query_embed = embed([query], task="retrieval.query",mode = "local")[0]
+    query_embed = embed([query], task="retrieval.query", mode="local")[0]
     results = client.query_points(
         collection_name=collection_name,
         query=query_embed,
@@ -59,6 +59,6 @@ def get_corpus_from_qdrant(collection_name):
     return all_chunks
 
 
-query = "what is the empire"
+query = "who haut rodric"
 chunks, meta = retrieve(query)
 print(meta)

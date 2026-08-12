@@ -54,16 +54,16 @@ class Ingest:
         chunks: list[str] = split_into_chunks(text)
         all_embeddings: list[list[float]] = self._batch_embed(chunks)
         # chunks_with_vectors: list[dict] = []
-
-        if not client.collection_exists(collection_name=self.collection_name):
-            print(f"Collection '{self.collection_name}' doesn't exist.")
-            client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=models.VectorParams(
-                    size=384, distance=models.Distance.COSINE
-                ),
-            )
-
+        self._print_logs(chunks, all_embeddings)
+        # if not client.collection_exists(collection_name=self.collection_name):
+        #     print(f"Collection '{self.collection_name}' doesn't exist.")
+        #     client.create_collection(
+        #         collection_name=self.collection_name,
+        #         vectors_config=models.VectorParams(
+        #             size=512, distance=models.Distance.COSINE
+        #         ),
+        #     )
+        self._collection_check()
         # for i in range(0, len(chunks), self.batch_size):
         #     batch: list[str] = chunks[i : i + self.batch_size]
         #     batch_embeddings = embed(batch, "retrieval.passage")
@@ -92,16 +92,19 @@ class Ingest:
             chunks.append(chunk["page_text"])
         all_embeddings = self._batch_embed(chunks)
         # vectorized  = []
+        self._print_logs(chunked, all_embeddings)
 
-        if not client.collection_exists(collection_name=self.collection_name):
-            print(f"Collection '{self.collection_name}' doesn't exist.")
-            client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config=models.VectorParams(
-                    size=384, distance=models.Distance.COSINE
-                ),
-            )
+        # if not client.collection_exists(collection_name=self.collection_name):
+        #     print(f"Collection '{self.collection_name}' doesn't exist.")
+        #     client.create_collection(
+        #         collection_name=self.collection_name,
+        #         vectors_config=models.VectorParams(
+        #             size=512, distance=models.Distance.COSINE
+        #         ),
+        #     )
+        self._collection_check()
 
+        I = 0
         for metadata, (chunk, embedding) in zip(chunked, zip(chunks, all_embeddings)):
             client.upsert(
                 collection_name=self.collection_name,
@@ -113,6 +116,7 @@ class Ingest:
                     )
                 ],
             )
+            # I += 1
         print(len(chunked))
 
         # for batch
@@ -125,6 +129,29 @@ class Ingest:
             batch_embeddings = embed(batch, mode="local")
             all_embeddings.extend(batch_embeddings)
         return all_embeddings
+
+    def _collection_check(self):
+        if not client.collection_exists(collection_name=self.collection_name):
+            print(f"Collection '{self.collection_name}' doesn't exist.")
+            client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config=models.VectorParams(
+                    size=384,
+                    distance=models.Distance.COSINE,  # 384 , 512
+                ),
+            )
+        # else:
+        #     print(f"COLLECTION: {self.collection_name}\nAlready exists")
+
+    def _print_logs(self, chunked, all_embeddings):
+        print(f"""
+        COLLECTION NAME:    {self.collection_name}
+        MODE:               {self.mode}
+        BATCH SIZE:         {self.batch_size}
+        Chunked:            {type(chunked), len(chunked)}
+        Embeddings:         {type(all_embeddings), len(all_embeddings)}
+
+        """)
 
 
 # def ingest(

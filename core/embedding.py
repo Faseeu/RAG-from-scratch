@@ -34,10 +34,13 @@ def embed(
         time.sleep(10)
         return embeddings
     elif mode == "local":
-        embeddings = model.encode(texts).tolist()
+        embeddings = model.encode(texts)
 
-        return embeddings
+        return [embeddings]
 
 
 # batch_size = 128
 # for i in range(len(a)):
+# batch = ["What is the meaning of everything","WHat is","yooo", "what the heck"]
+# batch_embeddings = embed(batch, mode="local")
+# print(batch_embeddings[0])

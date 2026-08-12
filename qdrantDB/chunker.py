@@ -38,7 +38,7 @@ def token_chunk(
 
     chunker = TokenChunker(
         tokenizer="gpt2",
-        chunk_size=512,  # tokens
+        chunk_size=450,  # tokens
         chunk_overlap=70,  # Keeps overlap to keep the context connected
     )
     chunked = []
@@ -46,12 +46,12 @@ def token_chunk(
         text = page["page_text"]
         clean = re.sub(r"\s+", " ", text).strip()
         chunks = chunker(clean)
-        for i,c in enumerate(chunks):
+        for i, c in enumerate(chunks):
             chunk_payload = page.copy()
             chunk_payload["page_text"] = c.text
             chunk_payload["token_count"] = c.token_count
             chunk_payload["chunk_index"] = i
             chunked.append(chunk_payload)
-    print(chunked)
+    # print(chunked)
     print(len(chunked))
     return chunked

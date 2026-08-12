@@ -190,11 +190,11 @@ class PDFParser:
 # # pdf_loader("Asimov_the_foundation.pdf")
 # # pdf_loader("Muhammad Messenger of Allah - Ash-shifa of Qadi Iyad.pdf")
 
-parser = PDFParser("data/Asimov_the_foundation.pdf")
-# print(parser.parse())
-parser.parse()
-print(parser.book_title)
-# import time
+# parser = PDFParser("data/Asimov_the_foundation.pdf")
+# # print(parser.parse())
+# parser.parse()
+# print(parser.book_title)
+# # import time
 
 # doc = pymupdf.open("data/Asimov_the_foundation.pdf")
 
