@@ -8,7 +8,7 @@ client = QdrantClient(host="localhost", port=6333)
 def retrieve(
     query: str,
     filter=None,
-    threshold=0.4,
+    threshold=0.5,
     top_k: int = 10,
     collection_name="The Foundation Trilogy",
 ):
@@ -63,3 +63,4 @@ query = "who is haut rodric"
 chunks, meta = retrieve(query)
 print(meta)
 print(chunks)
+print(len(chunks))
