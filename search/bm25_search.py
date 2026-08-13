@@ -13,13 +13,12 @@ class BM25:
         if corpus is None:
             data = load(filename)
             self.corpus = [vector["chunk"] for vector in data]
-        self.corpus = corpus
+        else:
+            self.corpus = corpus
         self.tk_corpus = self.tokenize(self.corpus)
         self.bm25 = BM25Okapi(self.tk_corpus)
 
-    def bm25_search(
-        self, query="meaning of goldilocks\n><?!", top_k: int = 15, filename="RAG.json"
-    ):
+    def bm25_search(self, query="Earth\n><?!", top_k: int = 15):
         # Gives the dict of the VecterDB(here it is 'RAG.json')
 
         # corpus = [vector["chunk"] for vector in data]
@@ -32,6 +31,8 @@ class BM25:
         # print(len(tk_corpus))
 
         tk_query = self.tokenize([query])[0]
+        if not tk_query:
+            return []
         # print(tk_query)
         scores = self.score(tk_query)
         # bm25 = BM25Okapi(tk_corpus)
@@ -57,22 +58,29 @@ class BM25:
         return scores
 
     def tokenize(self, textlist: list[str]):
-        tokenized = [
-            text.lower().split() for text in textlist
-        ]  # Decapitalizes the text
-        # print(tokenized)
-        tokenized = [
-            self.remove_puncutation(text) for text in tokenized
-        ]  # Removes all punctuation
+        tokenized = []
+        translator = str.maketrans(string.punctuation, " " * len(string.punctuation))
 
-        tokenized = [
-            [x for x in sublist if x != ""] for sublist in tokenized
-        ]  # Rempoves empty strings
+        for text in textlist:
+            cleaned_text = text.lower().translate(translator)
+            tokens = [token for token in cleaned_text.split() if token]
+            tokenized.append(tokens)
+        # tokenized = [
+        #     text.lower().split()
+        # ]  # Decapitalizes the text
+        # print(tokenized)
+        # tokenized = [
+        #     self.remove_puncutation(text) for text in tokenized if text
+        # ]  # Removes all punctuation
+
+        # # tokenized = [
+        #     [x for x in sublist if x != ""] for sublist in tokenized
+        # ]  # Rempoves empty strings
         # pprint(tokenized)
         return tokenized
 
-    def remove_puncutation(self, text):
-        results = text
+    def remove_puncutation(self, chunk):
+        results = chunk
         # print(results)
 
         for char in string.punctuation:

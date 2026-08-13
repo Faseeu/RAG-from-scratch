@@ -27,14 +27,14 @@ def generate_id(text: str) -> str:
 class Ingest:
     def __init__(
         self,
-        text=None,
+        # text=None,
         mode="text",
         collection_name="atomic_habits",
         filename="basic_ai.txt",
         batch_size=128,
     ):
 
-        self.text = text
+        # self.text = text
         self.collection_name = collection_name
         self.filename = filename
         if mode == "pdf":
@@ -51,18 +51,11 @@ class Ingest:
 
         if self.text is None:
             text: str = load_textfile(self.filename)
-        chunks: list[str] = split_into_chunks(self.text)
+        chunks: list[str] = split_into_chunks(text)
         all_embeddings: list[list[float]] = self._batch_embed(chunks)
         # chunks_with_vectors: list[dict] = []
         self._print_logs(chunks, all_embeddings)
-        # if not client.collection_exists(collection_name=self.collection_name):
-        #     print(f"Collection '{self.collection_name}' doesn't exist.")
-        #     client.create_collection(
-        #         collection_name=self.collection_name,
-        #         vectors_config=models.VectorParams(
-        #             size=512, distance=models.Distance.COSINE
-        #         ),
-        #     )
+
         self._collection_check()
         # for i in range(0, len(chunks), self.batch_size):
         #     batch: list[str] = chunks[i : i + self.batch_size]
@@ -94,14 +87,7 @@ class Ingest:
         # vectorized  = []
         self._print_logs(chunked, all_embeddings)
 
-        # if not client.collection_exists(collection_name=self.collection_name):
-        #     print(f"Collection '{self.collection_name}' doesn't exist.")
-        #     client.create_collection(
-        #         collection_name=self.collection_name,
-        #         vectors_config=models.VectorParams(
-        #             size=512, distance=models.Distance.COSINE
-        #         ),
-        #     )
+    
         self._collection_check()
 
         I = 0

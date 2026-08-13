@@ -58,9 +58,11 @@ def get_corpus_from_qdrant(collection_name):
             break
     return all_chunks
 
+
 if __name__ == "__main__":
-    query = "who is haut rodric"
-    chunks, meta = retrieve(query)
-    print(meta)
-    print(chunks)
-    print(len(chunks))
+    # query = "who is the emperor, and what is the small kingdoms within the empire"
+    # chunks, meta = retrieve(query)
+    # print(meta)
+    # print(chunks)
+    # print(len(chunks))
+    print(get_corpus_from_qdrant("The Foundation Trilogy"))
