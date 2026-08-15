@@ -4,8 +4,9 @@
 import json
 import os
 
-import requests
 from dotenv import load_dotenv
+
+from embedding.batch_embed import _batch_embed
 
 load_dotenv()  # reads .env file and loads all variables
 
@@ -24,25 +25,25 @@ def store(cache, filename=file):
         json.dump(cache, f)
 
 
-def embedder(texts: list[str], task: str = "retrieval.passage"):
+# def embedder(texts: list[str], task: str = "retrieval.passage"):
 
-    result = requests.post(
-        url="https://api.jina.ai/v1/embeddings",
-        headers={"Authorization": f"Bearer {API_KEY}"},
-        json={
-            "model": "jina-embeddings-v4",
-            "task": task,
-            "input": texts,
-            "dimensions": 512,
-        },
-    ).json()
+#     result = requests.post(
+#         url="https://api.jina.ai/v1/embeddings",
+#         headers={"Authorization": f"Bearer {API_KEY}"},
+#         json={
+#             "model": "jina-embeddings-v4",
+#             "task": task,
+#             "input": texts,
+#             "dimensions": 512,
+#         },
+#     ).json()
 
-    # print(result)
-    if result["data"][0] is not list:
-        embeddings = result["data"][0]
-    embeddings = [item["embedding"] for item in result["data"]]
+#     # print(result)
+#     if result["data"][0] is not list:
+#         embeddings = result["data"][0]
+#     embeddings = [item["embedding"] for item in result["data"]]
 
-    return embeddings
+#     return embeddings
 
 
 def ingest_cache(batch_size=128):
@@ -51,10 +52,12 @@ def ingest_cache(batch_size=128):
     all_embeddings: list[list[float]] = []
     queries_with_vectors: list[dict] = []
 
-    for i in range(0, len(queries), batch_size):
-        batch: list[str] = queries[i : i + batch_size]
-        batch_embeddings = embedder(batch, "retrieval.passage")
-        all_embeddings.extend(batch_embeddings)
+    # for i in range(0, len(queries), batch_size):
+    #     batch: list[str] = queries[i : i + batch_size]
+    #     batch_embeddings = embed(batch, "retrieval.passage")
+    #     all_embeddings.extend(batch_embeddings)
+
+    all_embeddings=_batch_embed(queries)
 
     for entry, vector in zip(data, all_embeddings):
         queries_with_vectors.append(
