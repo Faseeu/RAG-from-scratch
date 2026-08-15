@@ -1,6 +1,7 @@
 import uuid
 
-from qdrant_client import QdrantClient, models
+from qdrant_client import models
+from qdrantDB.clients import client
 
 from core.embedding import embed
 from core.loader import load_textfile
@@ -9,7 +10,6 @@ from core.text_chunker import split_into_chunks
 from qdrantDB.chunker import token_chunk
 from settings import settings
 
-client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 # sudo docker run -p 6333:6333 -p 6334:6334 \
 # -v $(pwd)/qdrant_storage:/qdrant/storage \
 # qdrant/qdrant

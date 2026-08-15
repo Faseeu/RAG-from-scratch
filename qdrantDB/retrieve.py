@@ -1,9 +1,7 @@
-from qdrant_client import QdrantClient
+from qdrantDB.clients import client
 
 from core.embedding import embed
 from settings import settings
-
-client = QdrantClient(host="localhost", port=6333)
 
 
 def retrieve(
