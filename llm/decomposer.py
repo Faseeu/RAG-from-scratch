@@ -1,24 +1,25 @@
 from llm.groqclient import GroqClient
 from llm.queryschema import QueryStructures
+from settings import settings
 
-decomposer = GroqClient(model="openai/gpt-oss-20b", output_schema=QueryStructures)
+decomposer = GroqClient(model=settings.router_llm_model, output_schema=QueryStructures)
 
 
 def query_decomposer(query):  # SUB QUERY DECOMPOSITION
     prompt = f"""
     You are a query decomposer.
 
-    Determine whether the user's query contains multiple UNRELATED intents 
+    Determine whether the user's query contains multiple UNRELATED intents
     or a single coherent question.
 
     Rules:
-    - "Unrelated" means the sub-questions could be asked in completely 
+    - "Unrelated" means the sub-questions could be asked in completely
     separate conversations with no loss of meaning.
-    - A question that compares, contrasts, or connects two things 
-    ("difference between X and Y", "how does X relate to Y") is ONE 
+    - A question that compares, contrasts, or connects two things
+    ("difference between X and Y", "how does X relate to Y") is ONE
     question, not two. Do NOT split these.
-    - Each sub-query you return must be fully self-contained — it should 
-    make complete sense on its own without needing the other sub-queries 
+    - Each sub-query you return must be fully self-contained — it should
+    make complete sense on its own without needing the other sub-queries
     for context.
     - If the query is a single question, return it unchanged.
     - Do not add, invent, or answer anything. Only split or preserve.

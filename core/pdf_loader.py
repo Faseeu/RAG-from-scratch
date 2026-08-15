@@ -142,9 +142,11 @@ import time
 
 import pymupdf
 
+from settings import settings
+
 
 class PDFParser:
-    def __init__(self, filename):
+    def __init__(self, filename=settings.filename):
         self.filename = filename
 
         # self.doc = pymupdf.open(self.filename)

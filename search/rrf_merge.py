@@ -20,8 +20,12 @@
 
 #     return top_results
 
+from settings import settings
 
-def rrf_merge(chunk_lists: list[list[str]], k: int = 60, top_k: int = 10) -> list[str]:
+
+def rrf_merge(
+    chunk_lists: list[list[str]], k: int = 60, top_k: int = settings.rrf_merge_top_k
+) -> list[str]:
 
     rrf = {}
     # for i, v in enumerate(vector_results):

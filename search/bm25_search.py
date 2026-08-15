@@ -5,12 +5,13 @@ from rank_bm25 import BM25Okapi
 
 from core.storage import load
 from qdrantDB.retrieve import get_corpus_from_qdrant
+from settings import settings
 
 # from pprint import pprint
 
 
 class BM25:
-    def __init__(self, corpus=None, filename="data/RAG.json"):
+    def __init__(self, corpus=None, filename=settings.RAG_text_filename):
         if corpus is None:
             data = load(filename)
             self.corpus = [vector["chunk"] for vector in data]
@@ -19,7 +20,7 @@ class BM25:
         self.tk_corpus = self.tokenize(self.corpus)
         self.bm25 = BM25Okapi(self.tk_corpus, k1=1.2, b=0.3)
 
-    def bm25_search(self, query="Earth\n><?!", top_k: int = 15):
+    def bm25_search(self, query="Earth\n><?!", top_k: int = settings.retrieval_top_k):
         # Gives the dict of the VecterDB(here it is 'RAG.json')
 
         # corpus = [vector["chunk"] for vector in data]

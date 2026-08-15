@@ -2,6 +2,7 @@ import os
 
 from dotenv import load_dotenv
 from sentence_transformers import CrossEncoder
+from settinsg import settings
 
 # Load variables from .env
 load_dotenv()
@@ -10,14 +11,17 @@ load_dotenv()
 token = os.getenv("HF_TOKEN")
 
 
-model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", token=token)
+model = CrossEncoder(settings.rerank_model, token=token)
 
 
 # scores = model.predict(pairs)  # returns a list of floats, one score per pair
 
 
 def rerank(
-    query: str, chunks: list[str], top_k: int = 3, threshold: int = 0.5
+    query: str,
+    chunks: list[str],
+    top_k: int = settings.rerank_top_k,
+    threshold: int = settings.rerank_threshold,
 ) -> list[str]:
 
     pairs = []
@@ -36,7 +40,6 @@ def rerank(
 
     print(f"SCORES FROM RERANKER: {top_sorted}")
     top_scores = [chunk["chunk"] for chunk in top_sorted[:top_k]]
-    # print(top_scorq
-    # es)
+    # print(top_scores)
 
     return top_scores

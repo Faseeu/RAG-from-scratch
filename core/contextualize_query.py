@@ -1,6 +1,7 @@
 from llm.groqclient import GroqClient
+from settings import settings
 
-contextualizer = GroqClient(model="openai/gpt-oss-20b")
+contextualizer = GroqClient(model=settings.router_llm_model)
 
 
 def contextualize_query(query: str, history: list[dict]):

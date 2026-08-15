@@ -31,16 +31,19 @@ import re
 
 from chonkie import TokenChunker
 
+from settings import settings
+
+chunker = TokenChunker(
+    tokenizer="gpt2",
+    chunk_size=settings.chunk_size,  # tokens
+    chunk_overlap=settings.chunk_overlap,  # Keeps overlap to keep the context connected
+)
+
 
 def token_chunk(
     parsed_book,
 ):
 
-    chunker = TokenChunker(
-        tokenizer="gpt2",
-        chunk_size=450,  # tokens
-        chunk_overlap=70,  # Keeps overlap to keep the context connected
-    )
     chunked = []
     for page in parsed_book:
         text = page["page_text"]

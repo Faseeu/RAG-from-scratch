@@ -1,5 +1,6 @@
 from llm.groqclient import GroqClient
 from llm.queryschema import QueryStructures
+from settings import settings
 
 # from dotenv import load_dotenv
 # import os
@@ -8,7 +9,7 @@ from llm.queryschema import QueryStructures
 
 # API_KEY = os.getenv("GROQ_API_KEY")
 
-rewriter = GroqClient(model="openai/gpt-oss-20b", output_schema=QueryStructures)
+rewriter = GroqClient(model=settings.router_llm_model, output_schema=QueryStructures)
 
 
 def query_rewriter(query: str, extra_instructions: str):

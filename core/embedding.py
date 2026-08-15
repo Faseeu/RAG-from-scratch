@@ -4,13 +4,16 @@ import requests
 from dotenv import load_dotenv
 from sentence_transformers import SentenceTransformer
 
+from settings import settings
+
 load_dotenv()  # reads .env file and loads all variables
 
 API_KEY = os.getenv("JINA_API_KEY")
-model = SentenceTransformer("Snowflake/snowflake-arctic-embed-s")
+model = SentenceTransformer(settings.embedding_model)
+
 
 def embed(
-    texts: list[str], task: str = "retrieval.passage", mode="jina"
+    texts: list[str], task: str = "retrieval.passage", mode=settings.embedding_mode
 ) -> list[list[float]]:
     if mode == "jina":
         result = requests.post(

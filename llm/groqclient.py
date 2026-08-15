@@ -3,6 +3,8 @@ import time
 from dotenv import load_dotenv
 from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
 
+from settings import settings
+
 # import os
 # import json
 
@@ -12,7 +14,9 @@ load_dotenv()  # reads .env file and loads all variables
 
 
 class GroqClient:
-    def __init__(self, model: str, max_tokens: int = 5000, output_schema=None):
+    def __init__(
+        self, model: str, max_tokens: int = settings.max_tokens, output_schema=None
+    ):
 
         self.client = Groq()
         self.model = model

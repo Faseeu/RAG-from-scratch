@@ -1,9 +1,10 @@
 from core.cosine_similarity import cosine_similarity
 from core.embedding import embed
 from core.storage import load
+from settings import settings
 
 
-def retriever(query, top_k: int = 15):
+def retriever(query, top_k: int = settings.retrieval_top_k):
     chunks = load()
 
     query_embed = embed([query], "retrieval.query")[0]

@@ -7,8 +7,9 @@ from core.loader import load_textfile
 from core.pdf_loader import PDFParser
 from core.text_chunker import split_into_chunks
 from qdrantDB.chunker import token_chunk
+from settings import settings
 
-client = QdrantClient(host="localhost", port=6333)
+client = QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port)
 # sudo docker run -p 6333:6333 -p 6334:6334 \
 # -v $(pwd)/qdrant_storage:/qdrant/storage \
 # qdrant/qdrant
@@ -29,9 +30,9 @@ class Ingest:
         self,
         # text=None,
         mode="text",
-        collection_name="atomic_habits",
-        filename="basic_ai.txt",
-        batch_size=128,
+        collection_name=settings.collection_name,
+        filename=settings.filename,
+        batch_size=settings.batch_size,
     ):
 
         # self.text = text
@@ -45,6 +46,7 @@ class Ingest:
             parser = PDFParser(self.filename)
             self.parsed = parser.parse()
             self.collection_name = parser.book_title
+            settings.collection_name = self.collection_name
             print(f"COLLECTION NAME: {self.collection_name}")
             self.ingest_pdf()
 
