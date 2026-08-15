@@ -51,6 +51,7 @@ def get_corpus_from_qdrant(collection_name):
             limit=10000,
             with_payload=True,
             with_vectors=False,
+            offset=next_page
         )
         all_chunks.extend([r.payload["page_text"] for r in records])
 
