@@ -1,12 +1,12 @@
 import uuid
 
-from chunker import token_chunk
 from qdrant_client import QdrantClient, models
 
 from core.embedding import embed
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
 from core.text_chunker import split_into_chunks
+from qdrantDB.chunker import token_chunk
 
 client = QdrantClient(host="localhost", port=6333)
 # sudo docker run -p 6333:6333 -p 6334:6334 \
@@ -37,15 +37,16 @@ class Ingest:
         # self.text = text
         self.collection_name = collection_name
         self.filename = filename
+        self.mode = mode
+
+        self.batch_size = batch_size
+
         if mode == "pdf":
             parser = PDFParser(self.filename)
             self.parsed = parser.parse()
             self.collection_name = parser.book_title
-            print(self.collection_name)
-
-        self.mode = mode
-
-        self.batch_size = batch_size
+            print(f"COLLECTION NAME: {self.collection_name}")
+            self.ingest_pdf()
 
     def ingest_text(self):
 
@@ -87,7 +88,6 @@ class Ingest:
         # vectorized  = []
         self._print_logs(chunked, all_embeddings)
 
-    
         self._collection_check()
 
         I = 0
@@ -184,7 +184,7 @@ class Ingest:
 #             ],
 #         )
 
-
-filename = "data/Asimov_the_foundation.pdf"
-i = Ingest(mode="pdf", filename=filename)
-i.ingest_pdf()
+if __name__ == "__main__":
+    filename = "data/Asimov_the_foundation.pdf"
+    i = Ingest(mode="pdf", filename=filename)
+    i.ingest_pdf()

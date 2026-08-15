@@ -49,7 +49,7 @@ def token_chunk(
         for i, c in enumerate(chunks):
             # chunk_payload = page.copy()
             chunk_payload = {
-                "text": c.text,
+                "page_text": c.text,
                 "page_no": page["page_no"],
                 "book_title": page["book_title"],
                 "source": page["source"],

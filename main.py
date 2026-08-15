@@ -1,5 +1,6 @@
 from core.contextualize_query import contextualize_query
-from core.retriever import retriever
+
+# from core.retriever import retriever
 from guard.preprocessor import preprocessor
 from llm.decomposer import query_decomposer
 
@@ -8,6 +9,8 @@ from llm.groqclient import GroqClient
 from llm.query_rewriter import query_rewriter
 from memory import resume_or_create_session
 from prompt_builder import prompt_builder
+from qdrantDB.db_ingest import Ingest
+from qdrantDB.retrieve import get_corpus_from_qdrant, retrieve
 from search.bm25_search import BM25
 from search.reranker import rerank
 from search.rrf_merge import rrf_merge
@@ -26,9 +29,13 @@ def main():
 
     # print(tex)
     # ingest()
+    
+    filename = "data/Daniel Kahneman-Thinking, Fast and Slow .pdf"
+    Ingest(mode="pdf", filename=filename)
     turn = 0
     client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
-    bm25 = BM25()
+    corpus = get_corpus_from_qdrant()
+    bm25 = BM25(corpus=corpus)
     # convo_name = input("What do you want to name this conversation? :\n")
     # ConMemory = ConversationMemory(session_id="1", session_name=convo_name)
     ConMemory = resume_or_create_session()
@@ -84,7 +91,7 @@ def main():
                 vector_chunks = []
                 keyword_chunks = []
                 for vector_query in vector_query_list:
-                    chunk = retriever(vector_query)
+                    chunk = retrieve(vector_query)
                     # print(type(chunk))
                     vector_chunks.append(chunk)
                     print(len(vector_chunks))

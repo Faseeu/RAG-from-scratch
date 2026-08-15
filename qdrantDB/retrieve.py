@@ -35,11 +35,11 @@ def retrieve(
         limit=top_k,
     )
     chunks: list[str] = []
-    metadata: list[dict] = []
+    # metadata: list[dict] = []
     for point in results.points:
         chunks.append(point.payload["page_text"])
-        metadata.append(point.payload)
-    return chunks, metadata
+        # metadata.append(point.payload)
+    return chunks #, metadata
 
 
 def get_corpus_from_qdrant(collection_name):
