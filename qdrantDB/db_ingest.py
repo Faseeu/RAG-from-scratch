@@ -1,11 +1,15 @@
+import hashlib
+import os
+import re
 import uuid
 
+from core.embedding import embed
 from qdrant_client import models
 from qdrantDB.clients import client
 
-from core.embedding import embed
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
+from core.register_collection import collections_index
 from core.text_chunker import split_into_chunks
 from qdrantDB.chunker import token_chunk
 from settings import settings
@@ -29,25 +33,58 @@ class Ingest:
     def __init__(
         self,
         # text=None,
-        mode="text",
+        mode="pdf",
         collection_name=settings.collection_name,
         filename=settings.filename,
         batch_size=settings.batch_size,
     ):
 
         # self.text = text
-        self.collection_name = collection_name
+
         self.filename = filename
         self.mode = mode
+        self.file_hash = self._compute_hash(self.filename)
+
+        catalog = collections_index.catalog
+
+        for entry in catalog:
+            if entry["file_hash"] == self.file_hash:
+                print("⚠️ Document already ingested!")
+                print(
+                    f"   Matches: '{entry['source_file']}' in collection '{entry['collection_name']}'"
+                )
+                self.collection_name = entry["collection_name"]
+                self.is_duplicate = True
+                return
 
         self.batch_size = batch_size
 
         if mode == "pdf":
             parser = PDFParser(self.filename)
             self.parsed = parser.parse()
-            self.collection_name = parser.book_title
-            settings.collection_name = self.collection_name
-            print(f"COLLECTION NAME: {self.collection_name}")
+            self.book_title = (
+                parser.book_title
+                or os.path.splitext(os.path.basename(self.filename))[0]
+            )
+
+        if collection_name:
+            self.collection_name = self._sanitize(collection_name)
+
+        else:
+            self.collection_name = self._sanitize(self.book_title)
+
+        settings.collection_name = self.collection_name
+        print(f"COLLECTION NAME: {self.collection_name}")
+
+        collections_index.register_collection(
+            collection_name=self.collection_name,
+            display_name=self.book_title,
+            source_file=self.filename,
+            file_hash=self.file_hash,
+            chunk_count=len(self.parsed),
+        )
+
+        if mode == "pdf":
             self.ingest_pdf()
 
     def ingest_text(self):
@@ -82,6 +119,10 @@ class Ingest:
             )
 
     def ingest_pdf(self):
+        if self.is_duplicate:
+            print("Skipping ingestion: File is already in the database.")
+            return
+
         chunked = token_chunk(self.parsed)
         chunks = []
         for chunk in chunked:
@@ -130,6 +171,19 @@ class Ingest:
             )
         # else:
         #     print(f"COLLECTION: {self.collection_name}\nAlready exists")
+
+    def _calculate_filehash(self, filepath: str):
+        sha256 = hashlib.sha256()
+        with open(filepath, "rb") as f:
+            while chunk := f.read(8192):
+                sha256.update(chunk)
+            return sha256.hexdigest()
+
+    def _sanitize(self, name: str):
+        name = name.lower().split()
+
+        name = re.sub(r"[^a-z0-9_-]+", "_", name)
+        return name.strip("_")
 
     def _print_logs(self, chunked, all_embeddings):
         print(f"""
