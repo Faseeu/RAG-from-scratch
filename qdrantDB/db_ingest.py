@@ -9,7 +9,7 @@ from core.loader import load_textfile
 from core.pdf_loader import PDFParser
 from core.register_collection import collections_index
 from core.text_chunker import split_into_chunks
-from embedding.embedding import embed
+from embedding.batch_embed import _batch_embed
 from qdrantDB.chunker import token_chunk
 from qdrantDB.client import client
 from settings import settings
@@ -92,7 +92,7 @@ class Ingest:
         if self.text is None:
             text: str = load_textfile(self.filename)
         chunks: list[str] = split_into_chunks(text)
-        all_embeddings: list[list[float]] = self._batch_embed(chunks)
+        all_embeddings: list[list[float]] = _batch_embed(chunks=chunks)
         # chunks_with_vectors: list[dict] = []
         self._print_logs(chunks, all_embeddings)
 
@@ -127,7 +127,7 @@ class Ingest:
         chunks = []
         for chunk in chunked:
             chunks.append(chunk["page_text"])
-        all_embeddings = self._batch_embed(chunks)
+        all_embeddings = _batch_embed(chunks=chunks)
         # vectorized  = []
         self._print_logs(chunked, all_embeddings)
 
@@ -150,14 +150,14 @@ class Ingest:
 
         # for batch
 
-    def _batch_embed(self, chunks):
-        all_embeddings = []
-        for i in range(0, len(chunks), self.batch_size):
-            batch: list[str] = chunks[i : i + self.batch_size]
-            # batch_embeddings = embed(batch, "retrieval.passage")
-            batch_embeddings = embed(batch, mode="local")
-            all_embeddings.extend(batch_embeddings)
-        return all_embeddings
+    # def _batch_embed(self, chunks):
+    #     all_embeddings = []
+    #     for i in range(0, len(chunks), self.batch_size):
+    #         batch: list[str] = chunks[i : i + self.batch_size]
+    #         # batch_embeddings = embed(batch, "retrieval.passage")
+    #         batch_embeddings = embed(batch, mode="local")
+    #         all_embeddings.extend(batch_embeddings)
+    #     return all_embeddings
 
     def _collection_check(self):
         if not client.collection_exists(collection_name=self.collection_name):
