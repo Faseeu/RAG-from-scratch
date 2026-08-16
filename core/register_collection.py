@@ -43,7 +43,7 @@ class CollectionsIndex:
             collection["collection_name"] for collection in self.catalog
         ]
 
-        if collection_name in existing_collections:
+        if collection_name not in existing_collections:
             self.catalog.append(collection)
             with open(self.filepath, "w", encoding="utf-8") as f:
                 json.dump(self.catalog, f, indent=2)

@@ -14,6 +14,7 @@ from qdrantDB.retrieve import get_corpus_from_qdrant, retrieve
 from search.bm25_search import BM25
 from search.reranker import rerank
 from search.rrf_merge import rrf_merge
+from settings import settings
 from verify.answerschema import AnswerStructure
 from verify.quote_score import quote_score
 
@@ -29,9 +30,10 @@ def main():
 
     # print(tex)
     # ingest()
-    
+
     filename = "data/Daniel Kahneman-Thinking, Fast and Slow .pdf"
-    Ingest(mode="pdf", filename=filename)
+    settings.filename = filename
+    Ingest()
     turn = 0
     client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
     corpus = get_corpus_from_qdrant()

@@ -3,15 +3,15 @@ import os
 import re
 import uuid
 
-from core.embedding import embed
 from qdrant_client import models
-from qdrantDB.clients import client
 
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
 from core.register_collection import collections_index
 from core.text_chunker import split_into_chunks
+from embedding.embedding import embed
 from qdrantDB.chunker import token_chunk
+from qdrantDB.client import client
 from settings import settings
 
 # sudo docker run -p 6333:6333 -p 6334:6334 \
@@ -172,7 +172,7 @@ class Ingest:
         # else:
         #     print(f"COLLECTION: {self.collection_name}\nAlready exists")
 
-    def _calculate_filehash(self, filepath: str):
+    def _compute_hash(self, filepath: str):
         sha256 = hashlib.sha256()
         with open(filepath, "rb") as f:
             while chunk := f.read(8192):
@@ -180,7 +180,7 @@ class Ingest:
             return sha256.hexdigest()
 
     def _sanitize(self, name: str):
-        name = name.lower().split()
+        name = name.lower().strip()
 
         name = re.sub(r"[^a-z0-9_-]+", "_", name)
         return name.strip("_")

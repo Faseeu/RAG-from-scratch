@@ -1,6 +1,5 @@
-from qdrantDB.clients import client
-
-from core.embedding import embed
+from embedding.embedding import embed
+from qdrantDB.client import client
 from settings import settings
 
 
@@ -41,7 +40,7 @@ def retrieve(
     return chunks  # , metadata
 
 
-def get_corpus_from_qdrant(collection_name=settings):
+def get_corpus_from_qdrant(collection_name: str = settings.collection_name):
     all_chunks = []
     next_page = None
     while True:
