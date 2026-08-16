@@ -4,7 +4,8 @@ import string
 from rapidfuzz import fuzz, process
 
 from core.cosine_similarity import cosine_similarity
-from guard.embed_cache_ingest import embedder, load
+from embedding.embedding import embed
+from guard.embed_cache_ingest import load
 from guard.llmlayer import llm_call
 
 filename = "data/basic_greets.json"
@@ -53,7 +54,7 @@ def fuzzysearch(query: str, threshold=60):
 
 
 def vector_search(query: str, threshold=0.65, filename="data/faq_enteries.json"):
-    query_embed = embedder([query], "retrieval.query")[0]
+    query_embed = embed([query], "retrieval.query")[0]
 
     similarity_scores: dict[int, float] = {}
     # data_embed = [comp["embedding"] for comp in data]

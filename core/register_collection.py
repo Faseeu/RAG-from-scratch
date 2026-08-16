@@ -48,5 +48,17 @@ class CollectionsIndex:
             with open(self.filepath, "w", encoding="utf-8") as f:
                 json.dump(self.catalog, f, indent=2)
 
+    def list_collections(self):
+        collection_names = [
+            collection["collection_name"] for collection in self.catalog
+        ]
+
+        _PRINT_ABLE = f"\n{'_' * 20}\n".join(
+            f"{i}:{c}" for i, c in enumerate(collection_names)
+        )
+
+        print(_PRINT_ABLE)
+        return collection_names
+
 
 collections_index = CollectionsIndex()

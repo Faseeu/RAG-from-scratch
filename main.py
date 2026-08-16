@@ -1,4 +1,5 @@
 from core.contextualize_query import contextualize_query
+from core.register_collection import collections_index
 
 # from core.retriever import retriever
 from guard.preprocessor import preprocessor
@@ -30,7 +31,14 @@ def main():
 
     # print(tex)
     # ingest()
+    collections = collections_index.list_collections()
+    import time
 
+    time.sleep(2)
+    choice = int(input("Choose a collection name:- \nEnter the number for it:"))
+
+    user_choice = collections[choice]
+    settings.collection_name = user_choice
     filename = "data/Daniel Kahneman-Thinking, Fast and Slow .pdf"
     settings.filename = filename
     Ingest()
