@@ -8,8 +8,10 @@ def retrieve(
     filter=None,
     threshold=0.5,
     top_k: int = settings.retrieval_top_k,
-    collection_name=settings.collection_name,
+    collection_name: str | None = None,
 ):
+    if collection_name is None:
+        collection_name = settings.collection_name
     # if filter is None:
     #     filter = {"title": "The Foundation Trilogy"}
     # filterKey: str
@@ -40,7 +42,10 @@ def retrieve(
     return chunks  # , metadata
 
 
-def get_corpus_from_qdrant(collection_name: str = settings.collection_name):
+def get_corpus_from_qdrant(collection_name: str | None = None):
+    if collection_name is None:
+        collection_name = settings.collection_name
+
     all_chunks = []
     next_page = None
     while True:

@@ -140,13 +140,17 @@ def main():
             citation_verified = []
             for citation in validated.citations:
                 # validated_citation = Citation.model_validate(citation)
+
                 citation_dict = {
                     "chunk_id": citation.chunk_id,
                     "quote": citation.quote,
                 }
-                quote_check = quote_score(
-                    citation.quote, full_query_chunks[citation.chunk_id]
-                )
+                if 0 <= citation.chunk_id < len(full_query_chunks):
+                    quote_check = quote_score(
+                        citation.quote, full_query_chunks[citation.chunk_id]
+                    )
+                else:
+                    quote_check = None
                 citation_verified.append(quote_check)
 
                 citations_list.append(citation_dict)

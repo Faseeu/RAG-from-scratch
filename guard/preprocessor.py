@@ -50,7 +50,7 @@ def fuzzysearch(query: str, threshold=60):
     # for best in sliced[0]
     # greeting = hashmap[sliced[0]]
     # return greeting
-    return result[0] if result[1] > threshold else None
+    return hashmap[result[0]] if result[1] > threshold else None
 
 
 def vector_search(query: str, threshold=0.65, filename="data/faq_enteries.json"):

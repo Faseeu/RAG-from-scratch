@@ -26,9 +26,10 @@ class CollectionsIndex:
         source_file: str,
         file_hash: str,
         chunk_count: int,
-        created_at=datetime.now().isoformat(),
+        created_at=None,
     ):
         # full_catalog = self.show()
+        created_at = datetime.now().isoformat()
 
         collection = {
             "collection_name": collection_name,

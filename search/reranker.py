@@ -24,6 +24,8 @@ def rerank(
     top_k: int = settings.rerank_top_k,
     threshold: int = settings.rerank_threshold,
 ) -> list[str]:
+    if not chunks:
+        return []
 
     pairs = []
     for chunk in chunks:
