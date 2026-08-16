@@ -43,6 +43,7 @@ class Ingest:
 
         self.filename = filename
         self.mode = mode
+        self.is_duplicate = False
         self.file_hash = self._compute_hash(self.filename)
 
         catalog = collections_index.catalog

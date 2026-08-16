@@ -2,7 +2,8 @@ import os
 
 from dotenv import load_dotenv
 from sentence_transformers import CrossEncoder
-from settinsg import settings
+
+from settings import settings
 
 # Load variables from .env
 load_dotenv()
