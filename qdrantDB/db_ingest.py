@@ -28,7 +28,6 @@ def generate_id(text: str) -> str:
     return str(uuid.uuid5(NAMESPACE, text))
 
 
-# /home/faseeh/projects/RAG-from-scratch/.venv/bin/python /home/faseeh/projects/RAG-from-scratch/qdrantDB/ingest.py
 class Ingest:
     def __init__(
         self,
@@ -42,6 +41,8 @@ class Ingest:
         # self.text = text
 
         self.filename = filename
+        print(f"DEBUG: self.filename is: '{self.filename}'")
+        
         self.mode = mode
         self.is_duplicate = False
         self.file_hash = self._compute_hash(self.filename)

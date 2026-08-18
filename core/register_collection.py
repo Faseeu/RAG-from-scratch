@@ -50,6 +50,9 @@ class CollectionsIndex:
                 json.dump(self.catalog, f, indent=2)
 
     def list_collections(self):
+        self.catalog = self.show()
+        print(f"DEBUG: Catalog contains: {self.catalog}")
+
         collection_names = [
             collection["collection_name"] for collection in self.catalog
         ]

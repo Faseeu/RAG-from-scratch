@@ -1,17 +1,17 @@
 # embed_cache_ingest.py
-
-
 import json
 import os
 
 from dotenv import load_dotenv
 
 from embedding.batch_embed import _batch_embed
+from settings import settings
 
 load_dotenv()  # reads .env file and loads all variables
 
 API_KEY = os.getenv("JINA_API_KEY")
-file = "data/faq_enteries.json"
+
+file = settings.embed_cache_store
 
 
 def load(filename=file):
@@ -46,7 +46,7 @@ def store(cache, filename=file):
 #     return embeddings
 
 
-def ingest_cache(batch_size=128):
+def ingest_cache():
     data: list[dict] = load()
     queries: list[str] = [piece["query"] for piece in data]
     all_embeddings: list[list[float]] = []
@@ -57,7 +57,7 @@ def ingest_cache(batch_size=128):
     #     batch_embeddings = embed(batch, "retrieval.passage")
     #     all_embeddings.extend(batch_embeddings)
 
-    all_embeddings=_batch_embed(queries)
+    all_embeddings = _batch_embed(queries)
 
     for entry, vector in zip(data, all_embeddings):
         queries_with_vectors.append(

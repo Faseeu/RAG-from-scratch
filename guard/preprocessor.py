@@ -7,8 +7,9 @@ from core.cosine_similarity import cosine_similarity
 from embedding.embedding import embed
 from guard.embed_cache_ingest import load
 from guard.llmlayer import llm_call
+from settings import settings
 
-filename = "data/basic_greets.json"
+filename = settings.hashmap_store
 with open(filename, "r") as f:
     hashmap = json.load(f)
 faq_enteries = load()
@@ -53,7 +54,7 @@ def fuzzysearch(query: str, threshold=60):
     return hashmap[result[0]] if result[1] > threshold else None
 
 
-def vector_search(query: str, threshold=0.65, filename="data/faq_enteries.json"):
+def vector_search(query: str, threshold=0.65, filename=settings.embed_cache_store):
     query_embed = embed([query], "retrieval.query")[0]
 
     similarity_scores: dict[int, float] = {}

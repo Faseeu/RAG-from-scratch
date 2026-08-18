@@ -31,17 +31,29 @@ def main():
 
     # print(tex)
     # ingest()
+    filename = "data/Daniel Kahneman-Thinking, Fast and Slow .pdf"
+    settings.filename = filename
     collections = collections_index.list_collections()
-    import time
+    if not collections:
+        print("No collections found. Did you run ingest()?")
+        ingest_choice = input(
+            "DO you want to ingest a file? \nWrite y if yes, any other key = no: "
+        )
+        if ingest_choice.lower().strip() == "y":
+            Ingest()
+            collections = collections_index.list_collections()
+        else:
+            return
 
-    time.sleep(2)
     choice = int(input("Choose a collection name:- \nEnter the number for it:"))
+    if choice < 0 or choice >= len(collections):
+        print(f"Invalid choice. Must be 0–{len(collections) - 1}")
+        return
 
     user_choice = collections[choice]
     settings.collection_name = user_choice
-    filename = "data/Daniel Kahneman-Thinking, Fast and Slow .pdf"
-    settings.filename = filename
-    Ingest()
+
+    # Ingest()
     turn = 0
     client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
     corpus = get_corpus_from_qdrant()

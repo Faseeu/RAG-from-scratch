@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Models & Defaults
     default_llm_model: str = "openai/gpt-oss-120b"
     router_llm_model: str = "openai/gpt-oss-20b"
-    guard_llm_model :str = "openai/gpt-oss-20b"
+    guard_llm_model: str = "openai/gpt-oss-20b"
     max_tokens: int = 5000
 
     # Embeddings
@@ -45,6 +45,10 @@ class Settings(BaseSettings):
 
     # BM25 Parameters
     RAG_text_filename: str = "data/RAG.json"
+
+    # Preprocessor Parameters
+    embed_cache_store: str = "data/faq_enteries.json"
+    hashmap_store: str = "data/basic_greets.json"
 
 
 settings = Settings()
