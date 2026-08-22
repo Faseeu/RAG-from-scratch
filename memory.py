@@ -1,5 +1,6 @@
 import json
 import os
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -31,75 +32,6 @@ from pathlib import Path
 # print(mem)
 # print(len(mem))
 
-
-class ConversationMemory:
-    def __init__(
-        self,
-        session_id=None,
-        session_name: str = "",
-        created_at=None,
-        last_N=12,
-        data_dir="sessions",
-        # filename="conversation_memory.json",
-    ):
-
-        # self.session_name = session_name if session_name else input("Enter a SESSION NAME:- \n")
-        self.session_name = (
-            input("Enter a SESSION NAME:- \n") if session_name == "" else session_name
-        )
-        # self.session_name = session_name
-
-        if created_at is None:
-            self.created_at = datetime.now()
-        else:
-            self.created_at = created_at
-        self.session_id = (
-            (f"{self.created_at.strftime('%Y%m%d_%H%M%S')}{self.session_name}")
-            if session_id is None
-            else session_id
-        )
-        self.last_N = last_N
-
-        self.data_dir = data_dir
-        os.makedirs(self.data_dir, exist_ok=True)
-
-        self.filename = f"{self.session_id}.json"
-        self.filepath = Path(os.path.join(self.data_dir, self.filename))
-        # if self.filepath.exists() is not True:
-        #     self.filepath.touch(exist_ok=True)
-        self.history = self._load_once()
-
-    def load(self, complete: bool = False):
-        """Reads memory from history"""
-
-        full_memory = self.history
-        if complete is True:
-            return full_memory
-        return full_memory[-self.last_N :]
-
-    def store(self, memory):
-
-        full_memory = self.history
-        full_memory.append(memory)  # step 2: add new turn
-        with open(self.filepath, "w") as f:
-            json.dump(full_memory, f)
-            print("STORED SUCCESSFULLY")
-
-    def _load_once(self, complete=True):
-        """Reads memory from file. Returns [] if file doesn't exist yet."""
-        try:
-            with open(self.filepath, "r") as f:
-                full_memory = json.load(f)
-                if complete is True:
-                    return full_memory
-                return full_memory[-self.last_N :]
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
-
-    def __str__(self):
-        return f"{self.session_id}\n\n{self.session_name}\n\n{self.created_at}\n\n{self.filename}\n{self.filepath}"
-
-
 # def sessions_index(
 #     session_id=None,
 #     session_name=None,
@@ -124,40 +56,143 @@ class ConversationMemory:
 #             json.dump(full_index, f)
 
 
+@dataclass
+class MemTurn:
+    question: str = ""
+    answer: str = ""
+    mem: dict = field(default_factory=dict)
+
+
+# @dataclass
+# class MemStructure:
+#     memories: list[MemTurn] = field(default_factory=list)
+
+
+@dataclass
+class Session:
+    session_id: str
+    session_name: str
+    created_at: str
+
+    @classmethod
+    def create_new(cls, session_id: str | None = None, session_name: str | None = None):
+        if not session_name:
+            session_name = input("Enter a SESSION NAME:- \n")
+        now = datetime.now()
+
+        session_id = (
+            (f"{now.strftime('%Y%m%d_%H%M%S')}_{session_name}")
+            if session_id is None
+            else session_id
+        )
+
+        return cls(
+            session_id=session_id,
+            session_name=session_name,
+            created_at=now.strftime("%Y-%m-%dT%H:%M:%S.%f"),
+        )
+
+
+class ConversationMemory:
+    def __init__(
+        self,
+        session: Session,
+        # session_id=None,
+        # session_name: str = "",
+        # created_at=None,
+        last_N: int = 12,
+        data_dir: Path = "sessions",
+        # filename="conversation_memory.json",
+    ):
+        self.session = session
+
+        self.last_N = last_N
+
+        self.data_dir = data_dir
+        os.makedirs(self.data_dir, exist_ok=True)
+
+        self.filename = f"{self.session.session_id}.json"
+        self.filepath = Path(os.path.join(self.data_dir, self.filename))
+        # if self.filepath.exists() is not True:
+        #     self.filepath.touch(exist_ok=True)
+        self.history = self._load_once()
+
+    def load(self, complete: bool = False):
+        """Reads memory from history"""
+
+        if complete is True:
+            return self.history
+        return self.history[-self.last_N :]
+
+    def store(self, memory: MemTurn):
+
+        full_memory = self.history
+        full_memory.append(asdict(memory))  # step 2: add new turn
+        with open(self.filepath, "w") as f:
+            json.dump(full_memory, f)
+            print("STORED SUCCESSFULLY")
+
+    def _load_once(self, complete=True):
+        """Reads memory from file. Returns [] if file doesn't exist yet."""
+        try:
+            with open(self.filepath, "r") as f:
+                full_memory = json.load(f)
+                if complete is True:
+                    return full_memory
+                return full_memory[-self.last_N :]
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+    def __str__(self):
+        s = self.session
+        return f"{s.session_id}\n\n{s.session_name}\n\n{s.created_at}\n\n{self.filename}\n{self.filepath}"
+
+
 class SessionsIndex:
-    def __init__(self):
+    def __init__(self,data_dir:str = "sessions"):
 
-        self.filepath = Path("sessions/sessions_index.json")
-        self.catalog: list[dict[str, str]] = []
+        self.filepath = Path(data_dir)/"sessions_index.json"
+        # self.catalog: list[dict[str, str]] = []
 
-    def register(self, session_id, session_name, created_at=None):
+    def register(self, session: Session):
         # try:
-        full_catalog = self.show()
+        sessions = self.show()
         # if created_at is None:
         #     created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        session = {
-            "session_id": session_id,
-            "session_name": session_name,
-            "created_at": created_at,
-        }
+        # session = {
+        #     "session_id": session_id,
+        #     "session_name": session_name,
+        #     "created_at": created_at,
+        # }
+        # session = Session(
+        #     session_id=session_id,
+        #     session_name=session_name,
+        #     created_at=created_at,
+        # )
 
-        existing_ids = [entry["session_id"] for entry in full_catalog]
-        if session_id not in existing_ids:
-            full_catalog.append(session)
-            with open(self.filepath, "w") as f:
-                json.dump(full_catalog, f)
+        # existing_ids = [entry["session_id"] for entry in sessions]
+        existing_ids = [s.session_id for s in sessions]
+
+        if session.session_id in existing_ids:
+            print("Session already registered, skipping.")
+            return
+
+        sessions.append(session)
+        with open(self.filepath, "w") as f:
+            json.dump([asdict(s) for s in sessions], f)
 
     # except ValueError as e:
     #     raise e("This session is already registered in the catalog")
 
-    def show(self):
+    def show(self) -> list[Session]:
         try:
             if self.filepath.exists() is not True:
                 self.filepath.touch(exist_ok=True)
 
             with open(self.filepath, "r") as f:
-                full_catalog = json.load(f)
-                return full_catalog
+                raw = json.load(f)
+                sessions = [Session(**entry) for entry in raw]
+                return sessions
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
@@ -168,39 +203,38 @@ def resume_or_create_session():
         "Enter 'n' if you want to create a new session:\t\nEnter 'r' if you wna to resume an older one:\t"
     )
     if option == "n":
-        session_name = input("What do you want to name this conversation? :\n")
-
-        newSession = ConversationMemory(session_name=session_name)
+        # session_name = input("What do you want to name this conversation? :\n")
+        session = Session.create_new()
+        newSession = ConversationMemory(session)
         catalog = SessionsIndex()
+        catalog.register(session)
         print(
-            f"REGISTERING: id={newSession.session_id}, name={newSession.session_name}, created={newSession.created_at}"
+            f"REGISTERING: id={session.session_id}, name={session.session_name}, created={session.created_at}"
         )
-        catalog.register(
-            session_id=newSession.session_id,
-            session_name=newSession.session_name,
-            created_at=newSession.created_at.strftime(time_fmt),
-        )
+        # catalog.register(
+        #     session_id=newSession.session_id,
+        #     session_name=newSession.session_name,
+        #     created_at=newSession.created_at.strftime(time_fmt),
+        # )
         return newSession
     elif option == "r":
         catalog = SessionsIndex()
         sessions = catalog.show()
         for i, session in enumerate(sessions):
-            name = session["session_name"]
-            sid = session["session_id"]
-            created_at = session["created_at"]
+            name = session.session_name
+            sid = session.session_id
+            created_at = session.created_at
             print(f"""
         Session Number: {i}  -- Session Name: {name}
         Session ID:    {sid} -- Created at:  {created_at}
             """)
         session_num = int(input("Enter the Session Number you want to resume:\t"))
         chosen_session = sessions[session_num]
-        name = chosen_session["session_name"]
-        sid = chosen_session["session_id"]
-        created_at = datetime.strptime(chosen_session["created_at"], time_fmt)
+        # name = chosen_session.session_name
+        # sid = chosen_session.session_id
+        # created_at = datetime.strptime(chosen_session.created_at, time_fmt)
 
-        return ConversationMemory(
-            session_id=sid, session_name=name, created_at=created_at
-        )
+        return ConversationMemory(chosen_session)
     else:
         print("The only aavailble options are 'n' and 'r'")
         return resume_or_create_session()

@@ -150,12 +150,19 @@ V4 — MEMORY + MULTI-TURN
   - Session-aware retrieval: use entire conversation history,
     not just last message, to form retrieval query
 
-V5 — PRODUCTION
-  - Swap JSON file for real vector DB (Qdrant or Chroma)
-  - Metadata filtering (retrieve by date, category, source)
+
+
+V5 — PRODUCTION (IN PROGRESS — ~50% DONE)
+    - Metadata filtering (retrieve by date, category, source)
   - Document structure awareness (headers, tables, PDFs)
-  - Streaming responses
-  - Evaluation pipeline: measure if RAG is actually working
+  - Real Vector Database: Qdrant Client + Qdrant Collections Index ✅
+  - Document Deduplication: SHA-256 file fingerprinting ✅
+  - Document Structure & PDF Parser: PyMuPDF + Chonkie TokenChunker ✅
+  - Centralized System Settings: settings.py via pydantic-settings ✅
+  - Dynamic Collection Selection: catalog-based routing in main.py ✅
+  - Streaming responses: Token-by-token async yield ⬜ NOT STARTED
+  - Evaluation pipeline: Ragas / DeepEval Benchmarking ⬜ NOT STARTED
+  - Clean Headless Engine: Decouple CLI input() from core logic ⬜ IN PROGRESS
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -164,27 +171,58 @@ WHAT WE BUILT —  FILE BY FILE
 
 ALL FILES ARE COMPLETE AND WORKING. Here is the full picture:
 
+
 rag/
-├── .env
+├── .env                          # API keys (GROQ_API_KEY, HF_TOKEN, JINA_API_KEY)
 ├── .gitignore
-├── loader.py             ✅ done
-├── text_chunker.py       ✅ done
-├── embeddings.py         ✅ done
-├── cosine_similarity.py  ✅ done
-├── storage.py            ✅ done
-├── ingest.py             ✅ done
-├── retriever.py          ✅ done
-├── bm25_search.py        ✅ done — class BM25, memoized index build
-├── rrf_merge.py          ✅ done
-├── reranker.py           ✅ done — module-level singleton CrossEncoder
-├── prompt_builder.py     ✅ done
-├── groqclient.py         ✅ done (renamed from llm.py) — structured output support
-├── baseschema.py         ✅ done (NEW) — shared Pydantic QueryStructures model
-├── query_rewriter.py     ✅ done (V2) — query rewriting + expansion
-├── decomposer.py         ✅ done (NEW, V2) — sub-query decomposition
-├── memory.py             ✅ done (self-added, V1) — conMemory()
-└── main.py               ✅ done — fully wired, see pipeline diagram below
----
+├── settings.py                   ✅ NEW (V5) — BaseSettings config via pydantic-settings
+├── prompt_builder.py             ✅ UPDATED (V3/V4) — prompt with [chunk N] labels + quote rules
+├── memory.py                     ✅ UPDATED (V4) — ConversationMemory + SessionsIndex
+├── main.py                       ✅ UPDATED (V5) — interactive loop with Qdrant collection picker
+│
+├── core/
+│   ├── clients.py                ✅ NEW (V5) — client factory stubs
+│   ├── contextualize_query.py   ✅ UPDATED (V4/V5) — uses settings.router_llm_model
+│   ├── cosine_similarity.py     ✅ done (V0 legacy) — pure Python cosine similarity
+│   ├── loader.py                ✅ done (V0 legacy) — load_textfile helper
+│   ├── pdf_loader.py            ✅ NEW (V5) — PDFParser using PyMuPDF (extracts title/metadata)
+│   ├── register_collection.py   ✅ NEW (V5) — CollectionsIndex (document_registry.json manager)
+│   ├── retriever.py             ✅ done (V0 legacy) — in-memory JSON retriever
+│   ├── storage.py               ✅ done (V0 legacy) — store/load data/RAG.json
+│   └── text_chunker.py          ✅ done (V0 legacy) — sliding word window chunker
+│
+├── embedding/
+│   ├── embedding.py             ✅ NEW/REFACTORED (V5) — SentenceTransformers local + Jina API
+│   └── batch_embed.py           ✅ NEW (V5) — batch_embed() standalone batching loop
+│
+├── guard/
+│   ├── embed_cache_ingest.py    ✅ UPDATED (V3/V5) — uses _batch_embed + settings.embed_cache_store
+│   ├── llmlayer.py              ✅ UPDATED (V3/V5) — Layer 4 router using settings.guard_llm_model
+│   └── preprocessor.py          ✅ UPDATED (V3/V5) — uses unified embed() + settings paths
+│
+├── llm/
+│   ├── decomposer.py            ✅ UPDATED (V2/V5) — uses settings.router_llm_model
+│   ├── groqclient.py            ✅ UPDATED (V3/V5) — uses settings.max_tokens + retry logic
+│   ├── query_rewriter.py        ✅ UPDATED (V2/V5) — uses settings.router_llm_model
+│   └── queryschema.py           ✅ done (V2) — QueryStructures Pydantic model (was baseschema.py)
+│
+├── qdrantDB/
+│   ├── chunker.py               ✅ NEW (V5) — token_chunk() via Chonkie TokenChunker (gpt2)
+│   ├── client.py                ✅ NEW (V5) — shared QdrantClient instance from settings
+│   ├── db_ingest.py             ✅ NEW (V5) — Ingest class (hash, duplicate check, embed, Qdrant upsert)
+│   ├── load.py                  ✅ NEW (V5) — experimentation script with points/payloads
+│   └── retrieve.py              ✅ NEW (V5) — retrieve() & get_corpus_from_qdrant() scroll
+│
+├── search/
+│   ├── bm25_search.py           ✅ UPDATED (V1/V5) — BM25Okapi search from dynamic Qdrant corpus
+│   ├── reranker.py              ✅ UPDATED (V1/V5) — CrossEncoder reranker with empty-check & threshold
+│   └── rrf_merge.py             ✅ UPDATED (V1/V5) — multi-list RRF rank fusion from settings
+│
+└── verify/
+    ├── answerschema.py          ✅ done (V3) — AnswerStructure + Citation schemas
+    ├── llmjudge.py              ✅ done (V3) — JudgeStructure & post-judgment retrier
+    └── quote_score.py           ✅ done (V3) — fuzz.partial_ratio substring verifier (quote_search)
+
 
 loader.py
   - reads a .txt file into a plain string
@@ -511,6 +549,76 @@ main.py
   - while True: takes input → retrieve → prompt_builder →
     llm.generate → print answer
 
+
+---
+settings.py (NEW FILE, V5)
+  - Built using pydantic_settings.BaseSettings with SettingsConfigDict(env_file=".env").
+  - Centralizes all system variables:
+    * API Keys: GROQ_API_KEY, HF_TOKEN, JINA_API_KEY
+    * DB Endpoints: qdrant_host, qdrant_port
+    * Models: router_llm_model, default_llm_model, guard_llm_model, rerank_model
+    * Embedding dimensions: 384 (local Arctic) / 512 (Jina API)
+    * Chunking parameters: size=450, overlap=70
+    * Retrieval thresholds & top_k counts
+    * Store paths (hashmaps, FAQ caches, registry files)
+
+---
+core/register_collection.py (NEW FILE, V5)
+  - Contains CollectionsIndex class managing data/document_registry.json.
+  - show(): loads catalog list of dicts.
+  - register_collection(): registers unique collections (collection_name, display_name,
+    source_file, file_hash, chunk_count, created_at).
+  - list_collections(): refreshes catalog and displays numbered collections.
+
+---
+core/pdf_loader.py (NEW FILE, V5)
+  - Implements PDFParser using pymupdf (PyMuPDF).
+  - Extracts text page-by-page, capturing metadata.get("title") and page numbers.
+
+---
+embedding/embedding.py & embedding/batch_embed.py (REFACTORED / NEW V5)
+  - Extracted from old core/embedding.py.
+  - Supports local Snowflake/snowflake-arctic-embed-s (384-dim) and Jina API (512-dim).
+  - batch_embed.py: standalone batching loop (batch_embed(chunks: list[str], mode=..., batch_size=...))
+    for memory-safe batch processing.
+
+---
+qdrantDB/client.py (NEW FILE, V5)
+  - Initializes shared QdrantClient(host=settings.qdrant_host, port=settings.qdrant_port).
+
+---
+qdrantDB/chunker.py (NEW FILE, V5)
+  - Implements token_chunk(parsed_book) using chonkie.TokenChunker(tokenizer="gpt2").
+  - Generates rich chunk payload dictionaries: page_text, page_no, book_title,
+    source, token_count, confidence, and chunk_index.
+
+---
+qdrantDB/db_ingest.py (NEW FILE, V5)
+  - Ingestion engine into Qdrant.
+  - Computes SHA-256 file fingerprint (_compute_hash) to avoid duplicate processing.
+  - Checks collections_index.catalog before proceeding.
+  - Batch embeds chunks and upserts models.PointStruct with deterministic UUIDs into Qdrant.
+
+---
+qdrantDB/retrieve.py (NEW FILE, V5)
+  - retrieve(): embeds query with local Arctic embedder, searches Qdrant (client.query_points),
+    and returns matching text chunks.
+  - get_corpus_from_qdrant(): scrolls Qdrant (client.scroll(..., offset=next_page)) to
+    retrieve all chunks for building the BM25 index dynamically per session.
+
+---
+CHANGES IN EXISTING FILES FOR V5:
+  - main.py: Replaced static JSON loading with dynamic Qdrant collection selector;
+    builds BM25 index on the fly via get_corpus_from_qdrant(); added bounds-check
+    guard on citations (0 <= citation.chunk_id < len(full_query_chunks)).
+  - search/bm25_search.py: __init__ now accepts dynamic corpus: list[str] from Qdrant scroll.
+  - search/reranker.py: Added if not chunks: return [] guard to prevent CrossEncoder crashes.
+  - guard/preprocessor.py: fuzzysearch() now returns hashmap[result[0]] (the answer) instead
+    of result[0] (the key); reads paths from settings.py; unified embed() imports.
+  - guard/embed_cache_ingest.py: Replaced manual Jina API call with batch_embed().
+  - All LLM callers: Model names and token limits now reference settings.py.
+
+
 V3 — QUERY GUARD / ADAPTIVE RETRIEVAL — IN PROGRESS (NEW SESSION)
 
 New file: preprocessor.py
@@ -765,6 +873,122 @@ confirmed AGAIN in bm25_search.py, watch for these same families)
     chunks[0] is itself a list, not a string. Same family as bug #6
     (wrong container type) but specifically about accumulation
     depth, not dict-vs-list/set-vs-list confusion.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: V5 BUG AUDIT LOG (BUGS FACED & SOLVED)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(Add this to your bug log records)
+
+1. INVERTED REGISTRY CONDITION BUG:
+   - Problem: In core/register_collection.py, if collection_name in existing_collections:
+     only appended when collection ALREADY existed. New collections were silently dropped.
+   - Solution: Inverted condition to if collection_name not in existing_collections:.
+
+2. METHOD NAME MISMATCH & EARLY RETURN HASHING BUG:
+   - Problem: Ingest.__init__ called self._compute_hash(), but method was named
+     _calculate_filehash(). Also, return sha256.hexdigest() was indented inside the while
+     loop, returning after reading only 8KB.
+   - Solution: Renamed method to _compute_hash() and moved return statement outside loop.
+
+3. THE _sanitize TYPE ERROR (LIST VS STRING):
+   - Problem: name = name.lower().split() returned a list of strings, causing re.sub() to crash
+     with TypeError: expected string or bytes-like object, got 'list'.
+   - Solution: Changed .split() to .strip().
+
+4. BROKEN IMPORTS (qdrantDB.clients & core.embedding):
+   - Problem: Files imported qdrantDB.clients (plural) when file was qdrantDB/client.py
+     (singular), and core.embedding after it was moved to embedding/embedding.py.
+   - Solution: Fixed import paths to from qdrantDB.client import client and
+     from embedding.embedding import embed.
+
+5. STANDALONE _batch_embed WITH self PARAMETER:
+   - Problem: In embedding/batch_embed.py, function was extracted with def _batch_embed(self, chunks)
+     and referenced self.batch_size. Calling it standalone raised TypeError: missing required argument 'self'.
+   - Solution: Changed signature to def _batch_embed(chunks: list[str], mode=settings.embedding_mode, batch_size=settings.batch_size).
+
+6. MISSING is_duplicate = False DEFAULT IN Ingest.__init__:
+   - Problem: If document was not a duplicate, self.is_duplicate was never initialized. Later,
+     if self.is_duplicate: inside ingest_pdf() raised AttributeError.
+   - Solution: Added self.is_duplicate = False at the top of __init__.
+
+7. TYPO IN RERANKER IMPORT (settinsg):
+   - Problem: search/reranker.py had from settinsg import settings.
+   - Solution: Fixed typo to from settings import settings.
+
+8. PYTHON IMPORT-TIME DEFAULT ARGUMENT TRAP (The "Empty Filename" Mystery):
+   - Problem: def __init__(self, filename=settings.filename) evaluated settings.filename at
+     import time when it was "". Setting settings.filename = "book.pdf" in main.py and calling
+     Ingest() still passed the pre-bound filename="", causing FileNotFoundError.
+   - Solution: Set default to filename: str | None = None and resolve dynamically inside __init__:
+     self.filename = filename or settings.filename.
+
+9. FUZZY SEARCH RETURNING MATCHED QUERY INSTEAD OF BOT ANSWER:
+   - Problem: In guard/preprocessor.py, fuzzysearch() returned result[0] which was the matched
+     key (e.g. "hello"), returning the greeting back to user instead of mapped answer.
+   - Solution: Changed return to hashmap[result[0]] if result[1] > threshold else None.
+
+10. CITATION INDEX OUT OF BOUNDS ON LLM HALLUCINATIONS:
+    - Problem: If LLM hallucinated citation.chunk_id = 99 when only 4 chunks existed,
+      full_query_chunks[citation.chunk_id] crashed with IndexError.
+    - Solution: Added bounds check if 0 <= citation.chunk_id < len(full_query_chunks): before scoring.
+
+11. RERANKER CRASH ON EMPTY CHUNKS:
+    - Problem: If vector and BM25 search returned 0 chunks, CrossEncoder.predict([]) threw ValueError.
+    - Solution: Added if not chunks: return [] at top of rerank().
+
+12. VECTOR DIMENSION MISMATCH IN FAQ CACHE:
+    - Problem: data/faq_enteries.json had 512-dim Jina vectors. Local Snowflake Arctic produced
+      384-dim vectors. Cosine similarity calculations broke/corrupted.
+    - Solution: Updated guard/embed_cache_ingest.py to embed using the 384-dim local Arctic model.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: NEW ENTRIES FOR "COMMON MISTAKES THIS DEVELOPER MAKES"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(Append numbers 15, 16, 17 to your mistakes list)
+
+15. PYTHON IMPORT-TIME DEFAULT ARGUMENT TRAP (NEW IN V5!)
+    - def __init__(self, filename=settings.filename):
+    - Python evaluates default parameter values ONCE at module import time,
+      NOT when the class is instantiated. If settings.filename was "" at
+      import time, calling Ingest() later still passes filename="".
+    - FIX: Use filename: str | None = None and resolve dynamically inside
+      the function body: self.filename = filename or settings.filename.
+
+16. FUZZY SEARCH RETURNING KEY INSTEAD OF VALUE (NEW IN V3/V5!)
+    process.extractOne() returns (matched_key, score, index). Returning
+    result[0] hands back the user's query keyword instead of the mapped
+    answer hashmap[result[0]].
+
+17. CITATION INDEX OUT OF BOUNDS ON LLM HALLUCINATIONS (NEW IN V5!)
+    Accessing full_query_chunks[citation.chunk_id] without bounds-checking
+    crashes with IndexError if the LLM hallucinates an invalid chunk ID.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: UPDATED "WHERE WE ARE RIGHT NOW"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+(Replace your current 'Where we are right now' section with this)
+
+CURRENT STATE:
+  - V0 through V4 are 100% complete and working.
+  - V5 Ingestion, Qdrant storage, BM25 from Qdrant scroll, 4-tier preprocessor,
+    hybrid search, reranking, and citation verification are all wired into main.py.
+  - Settings centralized in settings.py.
+  - Document registry index working in data/document_registry.json.
+
+IMMEDIATE NEXT TASKS:
+  1. Fix the import-time default argument pattern across Ingest.__init__
+     and PDFParser.__init__ (filename: str | None = None).
+  2. Remove duplicate i.ingest_pdf() call from db_ingest.py __main__.
+  3. Re-embed data/faq_enteries.json using local 384-dim model to fix
+     preprocessor cosine dimension mismatch.
+  4. Decouple main.py CLI input prompts into a clean RAGEngine class
+     (Milestone 1 in plan.md).
+
+
+
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

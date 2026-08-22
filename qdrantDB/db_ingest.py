@@ -33,17 +33,17 @@ class Ingest:
         self,
         # text=None,
         mode="pdf",
-        collection_name=settings.collection_name,
-        filename=settings.filename,
-        batch_size=settings.batch_size,
+        collection_name: str | None = None,
+        filename: str | None = None,
+        batch_size: int | None = None,
     ):
 
         # self.text = text
 
-        self.filename = filename
+        self.filename = filename or settings.filename
         print(f"DEBUG: self.filename is: '{self.filename}'")
-        
-        self.mode = mode
+
+        self.mode = mode or settings.mode
         self.is_duplicate = False
         self.file_hash = self._compute_hash(self.filename)
 
@@ -59,7 +59,7 @@ class Ingest:
                 self.is_duplicate = True
                 return
 
-        self.batch_size = batch_size
+        self.batch_size = batch_size or settings.batch_size
 
         if mode == "pdf":
             parser = PDFParser(self.filename)
@@ -68,7 +68,7 @@ class Ingest:
                 parser.book_title
                 or os.path.splitext(os.path.basename(self.filename))[0]
             )
-
+        collection_name = collection_name or settings.collection_name
         if collection_name:
             self.collection_name = self._sanitize(collection_name)
 
@@ -78,13 +78,13 @@ class Ingest:
         settings.collection_name = self.collection_name
         print(f"COLLECTION NAME: {self.collection_name}")
 
-        collections_index.register_collection(
-            collection_name=self.collection_name,
-            display_name=self.book_title,
-            source_file=self.filename,
-            file_hash=self.file_hash,
-            chunk_count=len(self.parsed),
-        )
+        # collections_index.register_collection(
+        #     collection_name=self.collection_name,
+        #     display_name=self.book_title,
+        #     source_file=self.filename,
+        #     file_hash=self.file_hash,
+        #     chunk_count=len(self.parsed),
+        # )
 
         if mode == "pdf":
             self.ingest_pdf()
@@ -126,6 +126,14 @@ class Ingest:
             return
 
         chunked = token_chunk(self.parsed)
+        collections_index.register_collection(
+            collection_name=self.collection_name,
+            display_name=self.book_title,
+            source_file=self.filename,
+            file_hash=self.file_hash,
+            chunk_count=len(chunked),
+        )
+
         chunks = []
         for chunk in chunked:
             chunks.append(chunk["page_text"])
@@ -245,4 +253,3 @@ class Ingest:
 if __name__ == "__main__":
     filename = "data/Asimov_the_foundation.pdf"
     i = Ingest(mode="pdf", filename=filename)
-    i.ingest_pdf()

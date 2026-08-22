@@ -8,7 +8,7 @@ from llm.decomposer import query_decomposer
 # from core.ingest import ingest
 from llm.groqclient import GroqClient
 from llm.query_rewriter import query_rewriter
-from memory import resume_or_create_session
+from memory import MemTurn, resume_or_create_session
 from prompt_builder import prompt_builder
 from qdrantDB.db_ingest import Ingest
 from qdrantDB.retrieve import get_corpus_from_qdrant, retrieve
@@ -168,8 +168,9 @@ def main():
                 citations_list.append(citation_dict)
             response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
-            mem = {"question": context_query, "answer": response}  # Had user_query
+            # mem = {"question": context_query, "answer": response}  # Had user_query
             # conMemory("store", mem)
+            mem = MemTurn(question=context_query, answer=response)
 
             ConMemory.store(mem)
             # pprint("Vector Query", vector_query)
