@@ -139,10 +139,20 @@
 #                     text = span["text"]
 #                     size = span["size"]
 import time
+from dataclasses import dataclass
 
 import pymupdf
 
 from settings import settings
+
+
+@dataclass
+class Payload:
+    page_no: int
+    page_text: str
+    book_title: str
+    confidence: float
+    source: str
 
 
 class PDFParser:
@@ -169,14 +179,21 @@ class PDFParser:
 
         for i, page in enumerate(self.doc):
             text = page.get_text("text").strip()
-            payload = {
-                "page_no": i + 1,
-                "page_text": text,
-                "book_title": self.book_title,
-                # "table_of_contents": toc,
-                "confidence": 1.0 if len(text) > 100 else 0.0,
-                "source": self.filename,
-            }
+            # payload = {
+            #     "page_no": i + 1,
+            #     "page_text": text,
+            #     "book_title": self.book_title,
+            #     # "table_of_contents": toc,
+            #     "confidence": 1.0 if len(text) > 100 else 0.0,
+            #     "source": self.filename,
+            # }
+            payload = Payload(
+                page_no=i + 1,
+                page_text=text,
+                book_title=self.book_title,
+                confidence=1.0 if len(text) > 100 else 0.0,
+                source=self.filename,
+            )
             # self.payload
             self.parsed_book.append(payload)
 

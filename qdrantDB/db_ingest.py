@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import uuid
+from dataclasses import asdict
 
 from qdrant_client import models
 
@@ -136,14 +137,13 @@ class Ingest:
 
         chunks = []
         for chunk in chunked:
-            chunks.append(chunk["page_text"])
+            chunks.append(chunk.page_text)
         all_embeddings = _batch_embed(chunks=chunks)
         # vectorized  = []
         self._print_logs(chunked, all_embeddings)
 
         self._collection_check()
 
-        I = 0
         for metadata, (chunk, embedding) in zip(chunked, zip(chunks, all_embeddings)):
             client.upsert(
                 collection_name=self.collection_name,
@@ -151,7 +151,7 @@ class Ingest:
                     models.PointStruct(
                         id=generate_id(chunk),
                         vector=embedding,
-                        payload=metadata,
+                        payload=asdict(metadata),
                     )
                 ],
             )
@@ -175,7 +175,7 @@ class Ingest:
             client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=models.VectorParams(
-                    size=384,
+                    size=settings.embedding_dim,
                     distance=models.Distance.COSINE,  # 384 , 512
                 ),
             )

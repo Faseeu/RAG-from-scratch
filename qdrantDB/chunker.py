@@ -25,6 +25,18 @@
 
 #         i += step
 #     return chunks
+from dataclasses import dataclass
+
+
+@dataclass
+class ChunkPayload:
+    page_text: str
+    page_no: int
+    book_title: str
+    source: str
+    token_count: int
+    confidence: float
+    chunk_index: int
 
 
 import re
@@ -45,21 +57,33 @@ def token_chunk(
 ):
 
     chunked = []
+    chunk_index = 0
     for page in parsed_book:
-        text = page["page_text"]
+        text = page.page_text
         clean = re.sub(r"\s+", " ", text).strip()
         chunks = chunker(clean)
         for i, c in enumerate(chunks):
             # chunk_payload = page.copy()
-            chunk_payload = {
-                "page_text": c.text,
-                "page_no": page["page_no"],
-                "book_title": page["book_title"],
-                "source": page["source"],
-                "token_count": c.token_count,
-                "confidence": page["confidence"],
-                "chunk_index": i,
-            }
+
+            chunk_payload = ChunkPayload(
+                page_text=c.text,
+                page_no=page.page_no,
+                book_title=page.book_title,
+                source=page.source,
+                token_count=c.token_count,
+                confidence=page.confidence,
+                chunk_index=chunk_index,
+            )
+            chunk_index += 1
+            # chunk_payload = {
+            #     "page_text": c.text,
+            #     "page_no": page["page_no"],
+            #     "book_title": page["book_title"],
+            #     "source": page["source"],
+            #     "token_count": c.token_count,
+            #     "confidence": page["confidence"],
+            #     "chunk_index": i,
+            # }
 
             chunked.append(chunk_payload)
     # print(chunked)

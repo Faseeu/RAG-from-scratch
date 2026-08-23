@@ -168,7 +168,7 @@ def main():
                 citations_list.append(citation_dict)
             response = f"Sources:{citations_list} \nAnswer:{validated.answer}"
             print(user_query)
-            # mem = {"question": context_query, "answer": response}  # Had user_query
+            # mem = {"question": context_query, "answmer": response}  # Had user_query
             # conMemory("store", mem)
             mem = MemTurn(question=context_query, answer=response)
 
