@@ -115,7 +115,7 @@ def main():
                 for vector_query in vector_query_list:
                     chunk = retrieve(vector_query)
                     # print(type(chunk))
-                    vector_chunks.append(c.text for c in chunk)
+                    vector_chunks.append([c.text for c in chunk])
                     print(len(vector_chunks))
                 for bm25_query in bm25_query_list:
                     chunk = bm25.bm25_search(bm25_query)
