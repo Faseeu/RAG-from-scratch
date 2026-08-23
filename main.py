@@ -115,7 +115,7 @@ def main():
                 for vector_query in vector_query_list:
                     chunk = retrieve(vector_query)
                     # print(type(chunk))
-                    vector_chunks.append(chunk)
+                    vector_chunks.append(chunk.text)
                     print(len(vector_chunks))
                 for bm25_query in bm25_query_list:
                     chunk = bm25.bm25_search(bm25_query)
@@ -178,7 +178,9 @@ def main():
             print(f"Response:\n{response}")
             for citations_dict, score in zip(citations_list, citation_verified):
                 if score is None:
-                    print(f"⚠️ The Checked failed for chunk {citation_dict['chunk_id']}")
+                    print(
+                        f"⚠️ The Checked failed for chunk {citations_dict['chunk_id']}"
+                    )
                     continue
                 print(f"✅ Chunk ID: {citation_dict['chunk_id']} \nScore: {score:.2f}")
 

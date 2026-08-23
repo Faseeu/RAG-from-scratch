@@ -1,6 +1,15 @@
+from dataclasses import dataclass
+
+from core.register_collection import collections_index
 from embedding.embedding import embed
 from qdrantDB.client import client
 from settings import settings
+
+
+@dataclass
+class Chunk:
+    text: str
+    metadata: dict
 
 
 def retrieve(
@@ -12,6 +21,16 @@ def retrieve(
 ):
     if collection_name is None:
         collection_name = settings.collection_name
+    col: str
+    for collection in collections_index.catalog:
+        if collection["collecton_name"] == collection_name:
+            col = collection
+            break
+    if col["embedding_model"] != settings.embedding_model:
+        raise RuntimeError(
+            "Current embedding model is different from the model that was used to ingest the doc.\n Please Re-Ingest the whole doc with the new model "
+        )
+
     # if filter is None:
     #     filter = {"title": "The Foundation Trilogy"}
     # filterKey: str
@@ -34,12 +53,16 @@ def retrieve(
         score_threshold=threshold,
         limit=top_k,
     )
-    chunks: list[str] = []
+    # chunks: list[str] = []
     # metadata: list[dict] = []
+    chunks_data = []
     for point in results.points:
-        chunks.append(point.payload["page_text"])
+        payload = point.payload.copy()
+        text = payload.pop("page_text")
+        chunks_data.append(Chunk(text=text, metadata=payload))
+        # chunks.append(point.payload["page_text"])
         # metadata.append(point.payload)
-    return chunks  # , metadata
+    return chunks_data
 
 
 def get_corpus_from_qdrant(collection_name: str | None = None):

@@ -8,7 +8,7 @@ from qdrant_client import models
 
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
-from core.register_collection import collections_index
+from core.register_collection import Collection, collections_index
 from core.text_chunker import split_into_chunks
 from embedding.batch_embed import _batch_embed
 from qdrantDB.chunker import token_chunk
@@ -127,13 +127,16 @@ class Ingest:
             return
 
         chunked = token_chunk(self.parsed)
-        collections_index.register_collection(
+        collection = Collection(
             collection_name=self.collection_name,
             display_name=self.book_title,
             source_file=self.filename,
             file_hash=self.file_hash,
             chunk_count=len(chunked),
+            embedding_model=settings.embedding_model,
+            embedding_dim=settings.embedding_dim,
         )
+        collections_index.register_collection(collection)
 
         chunks = []
         for chunk in chunked:

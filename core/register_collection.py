@@ -1,6 +1,19 @@
 import json
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
+
+
+@dataclass
+class Collection:
+    collection_name: str
+    display_name: str
+    source_file: str
+    file_hash: str
+    chunk_count: int
+    embedding_model: str
+    embedding_dim: int
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
 class CollectionsIndex:
@@ -19,33 +32,25 @@ class CollectionsIndex:
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
-    def register_collection(
-        self,
-        collection_name: str,
-        display_name: str,
-        source_file: str,
-        file_hash: str,
-        chunk_count: int,
-        created_at=None,
-    ):
+    def register_collection(self, collection: Collection):
         # full_catalog = self.show()
-        created_at = datetime.now().isoformat()
+        collection.created_at = datetime.now().isoformat()
 
-        collection = {
-            "collection_name": collection_name,
-            "display_name": display_name,
-            "source_file": source_file,
-            "file_hash": file_hash,
-            "chunk_count": chunk_count,
-            "created_at": created_at,
-        }
+        # collection = {
+        #     "collection_name": collection_name,
+        #     "display_name": display_name,
+        #     "source_file": source_file,
+        #     "file_hash": file_hash,
+        #     "chunk_count": chunk_count,
+        #     "created_at": created_at,
+        # }
 
         existing_collections = [
             collection["collection_name"] for collection in self.catalog
         ]
 
-        if collection_name not in existing_collections:
-            self.catalog.append(collection)
+        if collection.collection_name not in existing_collections:
+            self.catalog.append(asdict(collection))
             with open(self.filepath, "w", encoding="utf-8") as f:
                 json.dump(self.catalog, f, indent=2)
 
