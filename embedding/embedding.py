@@ -30,10 +30,11 @@ def embed(
 
         if result["data"][0] is not list:
             embeddings = result["data"][0]
-        embeddings = [item["embedding"] for item in result["data"]]
-        import time
+        if "data" not in result:
+            raise RuntimeError(f"Jina error: {result}")
 
-        time.sleep(10)
+        embeddings = [item["embedding"] for item in result["data"]]
+
         return embeddings
     elif mode == "local":
         prompt_name = "query" if task == "retrieval.query" else None

@@ -23,12 +23,17 @@ def retrieve(
         collection_name = settings.collection_name
     col: str
     for collection in collections_index.catalog:
-        if collection["collecton_name"] == collection_name:
+        if collection["collection_name"] == collection_name:
             col = collection
             break
+
+    if col is None:
+        raise RuntimeError(f"'{collection_name}' not in registry. Ingest first.")
+
     if col["embedding_model"] != settings.embedding_model:
         raise RuntimeError(
-            "Current embedding model is different from the model that was used to ingest the doc.\n Please Re-Ingest the whole doc with the new model "
+            f"Collection built with {col.get('embedding_model')}, "
+            f"querying with {settings.embedding_model}. Delete collection + registry row, re-ingest."
         )
 
     # if filter is None:
@@ -57,6 +62,7 @@ def retrieve(
     # metadata: list[dict] = []
     chunks_data = []
     for point in results.points:
+        print(point.score, point.payload.get("page_no"))
         payload = point.payload.copy()
         text = payload.pop("page_text")
         chunks_data.append(Chunk(text=text, metadata=payload))

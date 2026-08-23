@@ -67,4 +67,5 @@ def ingest_cache():
     store(queries_with_vectors)
 
 
-# ingest_cache()
+if __name__ == "__main__":
+    ingest_cache()

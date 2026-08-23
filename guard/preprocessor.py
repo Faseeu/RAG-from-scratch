@@ -81,7 +81,7 @@ def remove_puncutation(text):
     # print(results)
     #  METHOD 3
     translation_table = str.maketrans("", "", string.punctuation)
-    results = text.translate(translation_table)
+    results = results.translate(translation_table)
     # METHOD 2 AND 3
     # for char in string.punctuation: # COMMON LINE
     #     # print("CHAR FROM PUNTUATION", char)
@@ -99,14 +99,12 @@ def remove_puncutation(text):
     return results.strip()
 
 
-# # print(preprocessor("yeah makes sense"))
-# query = (
-#     "How to apply the 4 rules of behavior change. Can you explain from how the writer explained but better way"
-# )
-# query_search = preprocessor(query)
+if __name__ == "__main__":
+    print(preprocessor("yeah makes sense"))
+    query = "How to apply the 4 rules of behavior change. Can you explain from how the writer explained but better way"
+    query_search = preprocessor(query)
 
-# # queries = [query["query"] for query in data]
-# print(query_search)
+    # queries = [query["query"] for query in data]
+    print(query_search)
 
-
-# print(queries)
+    # print(queries)

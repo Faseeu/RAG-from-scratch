@@ -89,6 +89,8 @@ class Ingest:
 
         if mode == "pdf":
             self.ingest_pdf()
+        elif mode == "text":
+            self.ingest_text()
 
     def ingest_text(self):
 
@@ -127,16 +129,16 @@ class Ingest:
             return
 
         chunked = token_chunk(self.parsed)
-        collection = Collection(
-            collection_name=self.collection_name,
-            display_name=self.book_title,
-            source_file=self.filename,
-            file_hash=self.file_hash,
-            chunk_count=len(chunked),
-            embedding_model=settings.embedding_model,
-            embedding_dim=settings.embedding_dim,
-        )
-        collections_index.register_collection(collection)
+        # collection = Collection(
+        #     collection_name=self.collection_name,
+        #     display_name=self.book_title,
+        #     source_file=self.filename,
+        #     file_hash=self.file_hash,
+        #     chunk_count=len(chunked),
+        #     embedding_model=settings.embedding_model,
+        #     embedding_dim=settings.embedding_dim,
+        # )
+        # collections_index.register_collection(collection)
 
         chunks = []
         for chunk in chunked:
@@ -160,6 +162,16 @@ class Ingest:
             )
             # I += 1
         print(len(chunked))
+        collection = Collection(
+            collection_name=self.collection_name,
+            display_name=self.book_title,
+            source_file=self.filename,
+            file_hash=self.file_hash,
+            chunk_count=len(chunked),
+            embedding_model=settings.embedding_model,
+            embedding_dim=settings.embedding_dim,
+        )
+        collections_index.register_collection(collection)
 
         # for batch
 
