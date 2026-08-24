@@ -51,4 +51,24 @@ class Settings(BaseSettings):
     hashmap_store: str = "data/basic_greets.json"
 
 
+    # TUNABLE = {
+    #     "embedding_model",
+    #     "embedding_dim",
+    #     "embedding_mode",
+    #     "chunk_size",
+    #     "chunk_overlap",
+    #     "retrieval_top_k",
+    #     "retrieval_threshold",
+    #     "rrf_merge_top_k",
+    #     "rerank_top_k",
+    #     "rerank_threshold",
+    #     "rerank_model",
+    #     "batch_size",
+    #     "default_llm_model",
+    #     "router_llm_model",
+    #     "guard_llm_model",
+    #     "max_tokens",
+    # }
+
+
 settings = Settings()

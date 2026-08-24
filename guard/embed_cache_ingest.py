@@ -63,6 +63,7 @@ def ingest_cache():
         queries_with_vectors.append(
             {"query": entry["query"], "embedding": vector, "answer": entry["answer"]}
         )
+    # print(len(queries_with_vectors[0]["embedding"]))
 
     store(queries_with_vectors)
 

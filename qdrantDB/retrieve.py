@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from core.register_collection import collections_index
 from embedding.embedding import embed
 from qdrantDB.client import client
-from qdrantDB.db_ingest import Ingest
 from settings import settings
+from utils.sanitize_name import sanitize_name
 
 
 @dataclass
@@ -16,10 +16,14 @@ class Chunk:
 def retrieve(
     query: str,
     filter=None,
-    threshold=settings.retrieval_threshold,
-    top_k: int = settings.retrieval_top_k,
+    threshold: float | None = None,
+    top_k: int | None = None,
     collection_name: str | None = None,
 ):
+    if threshold is None:
+        threshold = settings.retrieval_threshold
+    if top_k is None:
+        top_k = settings.retrieval_top_k
     if collection_name is None:
         collection_name = settings.collection_name
     col = None
@@ -99,5 +103,5 @@ if __name__ == "__main__":
     # print(meta)
     # print(chunks)
     # print(len(chunks))
-    collectio_name = Ingest._sanitize("The Foundation Trilogy")
-    print(get_corpus_from_qdrant(collectio_name))
+    collection_name = sanitize_name("The Foundation Trilogy")
+    print(get_corpus_from_qdrant(collection_name))

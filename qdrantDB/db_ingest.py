@@ -1,6 +1,5 @@
 import hashlib
 import os
-import re
 import uuid
 from dataclasses import asdict
 
@@ -14,6 +13,7 @@ from embedding.batch_embed import _batch_embed
 from qdrantDB.chunker import token_chunk
 from qdrantDB.client import client
 from settings import settings
+from utils.sanitize_name import sanitize_name
 
 # sudo docker run -p 6333:6333 -p 6334:6334 \
 # -v $(pwd)/qdrant_storage:/qdrant/storage \
@@ -80,10 +80,10 @@ class Ingest:
             )
         collection_name = collection_name or settings.collection_name
         if collection_name:
-            self.collection_name = self._sanitize(collection_name)
+            self.collection_name = sanitize_name(collection_name)
 
         else:
-            self.collection_name = self._sanitize(self.book_title)
+            self.collection_name = sanitize_name(self.book_title)
 
         settings.collection_name = self.collection_name
         print(f"COLLECTION NAME: {self.collection_name}")
@@ -213,11 +213,11 @@ class Ingest:
                 sha256.update(chunk)
             return sha256.hexdigest()
 
-    def _sanitize(self, name: str):
-        name = name.lower().strip()
+    # def _sanitize(self, name: str):
+    #     name = name.lower().strip()
 
-        name = re.sub(r"[^a-z0-9_-]+", "_", name)
-        return name.strip("_")
+    #     name = re.sub(r"[^a-z0-9_-]+", "_", name)
+    #     return name.strip("_")
 
     def _print_logs(self, chunked, all_embeddings):
         print(f"""
