@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     collection_name: str = ""
 
     # BM25 Parameters
-    RAG_text_filename: str = "data/RAG.json"
+    rag_filename: str = "data/RAG.json"
 
     # Preprocessor Parameters
     embed_cache_store: str = "data/faq_enteries.json"

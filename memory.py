@@ -100,13 +100,13 @@ class ConversationMemory:
         # session_id=None,
         # session_name: str = "",
         # created_at=None,
-        last_N: int = 12,
+        last_n: int = 12,
         data_dir: Path = "sessions",
         # filename="conversation_memory.json",
     ):
         self.session = session
 
-        self.last_N = last_N
+        self.last_n = last_n
 
         self.data_dir = data_dir
         os.makedirs(self.data_dir, exist_ok=True)
@@ -122,7 +122,7 @@ class ConversationMemory:
 
         if complete is True:
             return self.history
-        return self.history[-self.last_N :]
+        return self.history[-self.last_n :]
 
     def store(self, memory: MemTurn):
 
@@ -139,7 +139,7 @@ class ConversationMemory:
                 full_memory = json.load(f)
                 if complete is True:
                     return full_memory
-                return full_memory[-self.last_N :]
+                return full_memory[-self.last_n :]
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
@@ -205,18 +205,18 @@ def resume_or_create_session():
     if option == "n":
         # session_name = input("What do you want to name this conversation? :\n")
         session = Session.create_new()
-        newSession = ConversationMemory(session)
+        new_session = ConversationMemory(session)
         catalog = SessionsIndex()
         catalog.register(session)
         print(
             f"REGISTERING: id={session.session_id}, name={session.session_name}, created={session.created_at}"
         )
         # catalog.register(
-        #     session_id=newSession.session_id,
-        #     session_name=newSession.session_name,
-        #     created_at=newSession.created_at.strftime(time_fmt),
+        #     session_id=new_session.session_id,
+        #     session_name=new_session.session_name,
+        #     created_at=new_session.created_at.strftime(time_fmt),
         # )
-        return newSession
+        return new_session
     elif option == "r":
         catalog = SessionsIndex()
         sessions = catalog.show()

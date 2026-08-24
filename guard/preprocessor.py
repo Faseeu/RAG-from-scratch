@@ -12,11 +12,11 @@ from settings import settings
 filename = settings.hashmap_store
 with open(filename, "r") as f:
     hashmap = json.load(f)
-faq_enteries = load()
+faq_entries = load()
 
 
 def preprocessor(query: str, history):
-    query = remove_puncutation(query)
+    query = remove_punctuation(query)
     simple = exact_match(query)
     if simple is not None:
         return simple
@@ -58,25 +58,25 @@ def vector_search(query: str, threshold=0.65, filename=settings.embed_cache_stor
     query_embed = embed([query], "retrieval.query")[0]
 
     similarity_scores: dict[int, float] = {}
-    # data_embed = [comp["embedding"] for comp in data]
+    # embedding = [comp["embedding"] for comp in data]
 
     # print(query_embed)
-    # print(data_embed)
-    for i, faq_entry in enumerate(faq_enteries):
-        data_embed = faq_entry["embedding"]
-        # print(type(data_embed))
-        score = cosine_similarity(query_embed, data_embed)
+    # print(embedding)
+    for i, faq_entry in enumerate(faq_entries):
+        embedding = faq_entry["embedding"]
+        # print(type(embedding))
+        score = cosine_similarity(query_embed, embedding)
         similarity_scores[i] = score
 
     ranked = sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True)
     # print(ranked)
     best_index, best_score = ranked[0]
     if best_score > threshold:
-        return faq_enteries[best_index]["answer"]
+        return faq_entries[best_index]["answer"]
     return None
 
 
-def remove_puncutation(text):
+def remove_punctuation(text):
     results = text.lower().strip()
     # print(results)
     #  METHOD 3
