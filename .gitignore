@@ -36,8 +36,12 @@ data/
 sessions/*.json
 Fluent_Python.txt
 conversation_memory.json
-utils/
-utils
+utils/cognitive_reader_colab_processor.ipynb
+utils/html_visualizer.py
+utils/notebook_generator.py
+utils/via_negativa_features.py
+utils/cleanRAG.py
+test.py
 # ===========================
 # VSCODIUM / VSCODE
 # ===========================

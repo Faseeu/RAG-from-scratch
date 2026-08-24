@@ -1,4 +1,26 @@
+import json
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+TUNABLE = {
+    "embedding_model",
+    "embedding_dim",
+    "embedding_mode",
+    "chunk_size",
+    "chunk_overlap",
+    "retrieval_top_k",
+    "retrieval_threshold",
+    "rrf_merge_top_k",
+    "rerank_top_k",
+    "rerank_threshold",
+    "rerank_model",
+    "batch_size",
+    "default_llm_model",
+    "router_llm_model",
+    "guard_llm_model",
+    "max_tokens",
+}
 
 
 class Settings(BaseSettings):
@@ -50,25 +72,12 @@ class Settings(BaseSettings):
     embed_cache_store: str = "data/faq_enteries.json"
     hashmap_store: str = "data/basic_greets.json"
 
-
-    # TUNABLE = {
-    #     "embedding_model",
-    #     "embedding_dim",
-    #     "embedding_mode",
-    #     "chunk_size",
-    #     "chunk_overlap",
-    #     "retrieval_top_k",
-    #     "retrieval_threshold",
-    #     "rrf_merge_top_k",
-    #     "rerank_top_k",
-    #     "rerank_threshold",
-    #     "rerank_model",
-    #     "batch_size",
-    #     "default_llm_model",
-    #     "router_llm_model",
-    #     "guard_llm_model",
-    #     "max_tokens",
-    # }
+    def save(self, path=Path("data/settings.json")):
+        data = self.model_dump(include=TUNABLE)
+        path.write_text(json.dumps(data, indent=2))
 
 
 settings = Settings()
+p = Path("data/settings.json")
+if p.exists():
+    settings = settings.model_copy(update=json.loads(p.read_text()))
