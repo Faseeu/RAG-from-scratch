@@ -51,7 +51,9 @@ class Ingest:
         catalog = collections_index.catalog
 
         for entry in catalog:
-            if entry["file_hash"] == self.file_hash:
+            if entry["file_hash"] != self.file_hash:
+                continue
+            if entry.get("embedding_model") == settings.embedding_model:
                 print("⚠️ Document already ingested!")
                 print(
                     f"   Matches: '{entry['source_file']}' in collection '{entry['collection_name']}'"
@@ -59,6 +61,13 @@ class Ingest:
                 self.collection_name = entry["collection_name"]
                 self.is_duplicate = True
                 return
+
+            if client.collection_exists(entry["collection_name"]):
+                client.delete_collection(entry["collection_name"])
+            collections_index.catalog = [
+                e for e in collections_index.catalog if e["file_hash"] != self.file_hash
+            ]
+            break
 
         self.batch_size = batch_size or settings.batch_size
 

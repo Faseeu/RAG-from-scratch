@@ -11,6 +11,8 @@ def cosine_similarity(query_embed, chunk_embed):
 
     A = query_embed
     B = chunk_embed
+    if len(query_embed) != len(chunk_embed):
+        raise ValueError(f"dim mismatch: {len(A)} vs {len(B)}")
 
     dot_product = sum(a * b for a, b in zip(query_embed, chunk_embed))
     magOfA = magnitude(A)

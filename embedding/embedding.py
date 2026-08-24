@@ -28,8 +28,8 @@ def embed(
         ).json()
         # print(result)
 
-        if result["data"][0] is not list:
-            embeddings = result["data"][0]
+        # if result["data"][0] is not list:
+        #     embeddings = result["data"][0]
         if "data" not in result:
             raise RuntimeError(f"Jina error: {result}")
 

@@ -72,6 +72,8 @@ def main():
             or user_query == "exit"
         ):
             break
+        if user_query == "" or user_query == " " or user_query == None:
+            continue
         # Here I seperated the vector and BM25 query rewriting because what
         # They require are opposites
         #
