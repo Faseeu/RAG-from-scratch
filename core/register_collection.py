@@ -62,11 +62,11 @@ class CollectionsIndex:
             collection["collection_name"] for collection in self.catalog
         ]
 
-        _PRINT_ABLE = f"\n{'_' * 20}\n".join(
+        printable_catalog = f"\n{'_' * 20}\n".join(
             f"{i}:{c}" for i, c in enumerate(collection_names)
         )
 
-        print(_PRINT_ABLE)
+        print(printable_catalog)
         return collection_names
 
 

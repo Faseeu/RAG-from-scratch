@@ -59,11 +59,11 @@ def main():
     corpus = get_corpus_from_qdrant()
     bm25 = BM25(corpus=corpus)
     # convo_name = input("What do you want to name this conversation? :\n")
-    # ConMemory = ConversationMemory(session_id="1", session_name=convo_name)
-    ConMemory = resume_or_create_session()
+    # conversation_memory = ConversationMemory(session_id="1", session_name=convo_name)
+    conversation_memory = resume_or_create_session()
     while True:
         turn += 1
-        memory = ConMemory.load()
+        memory = conversation_memory.load()
         user_query: str = input("Enter your QUERY: \n")
         if (
             user_query == "q"
@@ -86,7 +86,7 @@ def main():
         if preprocessed is not None:
             print(f"Response from 4 layers:\n{preprocessed}")
         else:
-            # memory = ConMemory.load()
+            # memory = conversation_memory.load()
             context_query = contextualize_query(user_query, memory)
 
             decomposed_query = query_decomposer(context_query)  # Had user query before
@@ -146,7 +146,7 @@ def main():
                 full_query_chunks.extend(top_chunks)
             # if turn != 1:
             # memory = conMemory("load")
-            memory = ConMemory.load()
+            memory = conversation_memory.load()
             # else:
             #     memory = {}
             prompt = prompt_builder(
@@ -179,7 +179,7 @@ def main():
             # conMemory("store", mem)
             mem = MemTurn(question=context_query, answer=response)
 
-            ConMemory.store(mem)
+            conversation_memory.store(mem)
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
             print(f"Response:\n{response}")
