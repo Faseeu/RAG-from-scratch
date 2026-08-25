@@ -35,7 +35,7 @@ def retrieve(
     if col is None:
         raise RuntimeError(f"'{collection_name}' not in registry. Ingest first.")
 
-    if col["embedding_model"] != settings.embedding_model:
+    if col.get("embedding_model") != settings.embedding_model:
         raise RuntimeError(
             f"Collection built with {col.get('embedding_model')}, "
             f"querying with {settings.embedding_model}. Delete collection + registry row, re-ingest."

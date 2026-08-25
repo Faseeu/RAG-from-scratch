@@ -69,5 +69,11 @@ class CollectionsIndex:
         print(_PRINT_ABLE)
         return collection_names
 
+    def remove_by_hash(self,file_hash:str):
+        self.catalog = [e for e in self.catalog if e["file_hash"] != file_hash]
+        with open(self.filepath, "w", encoding="utf-8") as f:
+            json.dump(self.catalog, f, indent=2)
+
+
 
 collections_index = CollectionsIndex()

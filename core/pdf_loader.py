@@ -142,6 +142,7 @@ import time
 from dataclasses import dataclass
 
 import pymupdf
+import pymupdf4llm
 
 from settings import settings
 
@@ -178,7 +179,7 @@ class PDFParser:
         # print(metadata, self.book_title)
 
         for i, page in enumerate(self.doc):
-            text = page.get_text("text").strip()
+            text = pymupdf4llm.to_markdown(self.doc, pages=[i]).strip()
             # payload = {
             #     "page_no": i + 1,
             #     "page_text": text,

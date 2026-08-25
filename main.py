@@ -22,7 +22,7 @@ from verify.quote_score import quote_score
 # from pprint import pprint
 
 
-# TODO: V4 and V5
+# TODO: V5
 def main():
     # print("Hello from rag-from-scratch!")
     # text = load_textfile("./basic_ai.txt")
@@ -76,8 +76,10 @@ def main():
             user_query == ""
             or user_query == " "
             or user_query == None
-            or not user_query
+            or not user_query.strip()
         ):
+            continue
+        if not user_query.strip():
             continue
         # Here I seperated the vector and BM25 query rewriting because what
         # They require are opposites

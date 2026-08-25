@@ -28,9 +28,7 @@ from pathlib import Path
 #         # return full_memory
 
 
-# mem = conMemory("load")
-# print(mem)
-# print(len(mem))
+
 
 # def sessions_index(
 #     session_id=None,
@@ -97,9 +95,6 @@ class ConversationMemory:
     def __init__(
         self,
         session: Session,
-        # session_id=None,
-        # session_name: str = "",
-        # created_at=None,
         last_N: int = 12,
         data_dir: Path = "sessions",
         # filename="conversation_memory.json",
@@ -149,9 +144,9 @@ class ConversationMemory:
 
 
 class SessionsIndex:
-    def __init__(self,data_dir:str = "sessions"):
+    def __init__(self, data_dir: str = "sessions"):
 
-        self.filepath = Path(data_dir)/"sessions_index.json"
+        self.filepath = Path(data_dir) / "sessions_index.json"
         # self.catalog: list[dict[str, str]] = []
 
     def register(self, session: Session):
@@ -159,11 +154,7 @@ class SessionsIndex:
         sessions = self.show()
         # if created_at is None:
         #     created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        # session = {
-        #     "session_id": session_id,
-        #     "session_name": session_name,
-        #     "created_at": created_at,
-        # }
+
         # session = Session(
         #     session_id=session_id,
         #     session_name=session_name,
@@ -211,11 +202,7 @@ def resume_or_create_session():
         print(
             f"REGISTERING: id={session.session_id}, name={session.session_name}, created={session.created_at}"
         )
-        # catalog.register(
-        #     session_id=newSession.session_id,
-        #     session_name=newSession.session_name,
-        #     created_at=newSession.created_at.strftime(time_fmt),
-        # )
+
         return newSession
     elif option == "r":
         catalog = SessionsIndex()
@@ -230,9 +217,6 @@ def resume_or_create_session():
             """)
         session_num = int(input("Enter the Session Number you want to resume:\t"))
         chosen_session = sessions[session_num]
-        # name = chosen_session.session_name
-        # sid = chosen_session.session_id
-        # created_at = datetime.strptime(chosen_session.created_at, time_fmt)
 
         return ConversationMemory(chosen_session)
     else:
@@ -240,8 +224,9 @@ def resume_or_create_session():
         return resume_or_create_session()
 
 
-# mem = ConversationMemory(session_name="yo")
-# mem.store({"question": "test", "answer": "test"})
-# print(mem)
-# memSe = SessionsIndex()
-# print(memSe.show())
+if __name__ == "__maim__":
+    mem = ConversationMemory(session_name="yo")
+    mem.store({"question": "test", "answer": "test"})
+    print(mem)
+    memSe = SessionsIndex()
+    print(memSe.show())

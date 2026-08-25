@@ -117,10 +117,12 @@ class Ingest:
         #     all_embeddings.extend(batch_embeddings)
 
         for i, (chunk, embedding) in enumerate(zip(chunks, all_embeddings)):
-            metadata = {"title": "atomic habits", "author": "james_clear"}
-            chunk_index = i
-            metadata["chunk_index"] = chunk_index
-            metadata["text"] = chunk
+            metadata = {
+                "page_text": chunk,  # same key retrieve reads
+                "chunk_index": i,
+                "title": "atomic habits",
+                "author": "james_clear",
+            }
             client.upsert(
                 collection_name=self.collection_name,
                 points=[
