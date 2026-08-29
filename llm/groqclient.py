@@ -10,7 +10,13 @@ from settings import settings
 
 load_dotenv()  # reads .env file and loads all variables
 
+
 # API_KEY = os.getenv("GROQ_API_KEY")
+def _iter_token(response):
+    for chunk in response:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
 
 
 class GroqClient:
@@ -26,8 +32,7 @@ class GroqClient:
         self.model = model
         self.max_tokens = max_tokens
         self.schema = output_schema
-        if stream is None:
-            self.stream = settings.stream_response
+        self.stream = settings.stream_response if stream is None else stream
 
     def generate(self, user_prompt: str):
 
@@ -59,13 +64,14 @@ class GroqClient:
                         messages=[{"role": "user", "content": user_prompt}],
                     )
                 if self.stream is True:
-                    for chunk in response:
-                        delta = chunk.choices[0].delta.content
-                        if delta:
-                            yield delta
+                    pieces = []
+                    for token in _iter_token(response):
+                        print(token, end="", flush="")
+                        pieces.append(token)
+                    print()
+                    return "".join(pieces)
 
-                else:
-                    return response.choices[0].message.content
+                return response.choices[0].message.content
 
             except RateLimitError as e:
                 max_retries -= 1
