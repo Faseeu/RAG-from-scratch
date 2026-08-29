@@ -187,7 +187,7 @@ class PDFParser:
             #     # "table_of_contents": toc,
             #     "confidence": 1.0 if len(text) > 100 else 0.0,
             #     "source": self.filename,
-            # }
+            # 0
             payload = Payload(
                 page_no=i + 1,
                 page_text=text,

@@ -20,6 +20,7 @@ TUNABLE = {
     "router_llm_model",
     "guard_llm_model",
     "max_tokens",
+    "stream_response"
 }
 
 
@@ -42,6 +43,7 @@ class Settings(BaseSettings):
     router_llm_model: str = "openai/gpt-oss-20b"
     guard_llm_model: str = "openai/gpt-oss-20b"
     max_tokens: int = 5000
+    stream_response:bool = False
 
     # Embeddings
     embedding_model: str = "Snowflake/snowflake-arctic-embed-s"
@@ -71,6 +73,8 @@ class Settings(BaseSettings):
     # Preprocessor Parameters
     embed_cache_store: str = "data/faq_enteries.json"
     hashmap_store: str = "data/basic_greets.json"
+
+
 
     def save(self, path=Path("data/settings.json")):
         data = self.model_dump(include=TUNABLE)

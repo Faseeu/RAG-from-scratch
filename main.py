@@ -10,10 +10,8 @@ from llm.groqclient import GroqClient
 from llm.query_rewriter import query_rewriter
 from memory import MemTurn, resume_or_create_session
 from prompt_builder import prompt_builder
-from qdrantDB.db_ingest import Ingest
 from qdrantDB.retrieve import get_corpus_from_qdrant, retrieve
 from search.bm25_search import BM25
-from search.reranker import rerank
 from search.rrf_merge import rrf_merge
 from settings import settings
 from verify.answerschema import AnswerStructure
@@ -40,27 +38,34 @@ def main():
             "DO you want to ingest a file? \nWrite y if yes, any other key = no: "
         )
         if ingest_choice.lower().strip() == "y":
+            from qdrantDB.db_ingest import Ingest
+
             Ingest()
             collections = collections_index.list_collections()
         else:
             return
 
-    choice = int(input("Choose a collection name:- \nEnter the number for it:"))
-    if choice < 0 or choice >= len(collections):
+    choice = input("Choose a collection name:- \nEnter the number for it:")
+    c = int(choice)
+    if c < 0 or c >= len(collections):
         print(f"Invalid choice. Must be 0–{len(collections) - 1}")
         return
 
-    user_choice = collections[choice]
+    user_choice = collections[c]
     settings.collection_name = user_choice
 
     # Ingest()
     turn = 0
-    client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
+    client = GroqClient(
+        model="openai/gpt-oss-120b", stream=True, output_schema=AnswerStructure
+    )
     corpus = get_corpus_from_qdrant()
     bm25 = BM25(corpus=corpus)
     # convo_name = input("What do you want to name this conversation? :\n")
     # ConMemory = ConversationMemory(session_id="1", session_name=convo_name)
     ConMemory = resume_or_create_session()
+    from search.reranker import rerank
+
     while True:
         turn += 1
         memory = ConMemory.load()
@@ -156,7 +161,11 @@ def main():
             )  # Had user_query
             # print(prompt)
             resp = client.generate(prompt)
-            validated = AnswerStructure.model_validate_json(resp)
+            full_text = ""
+            for token in resp:
+                print(token, end="", flush=True)
+                full_text += token
+            validated = AnswerStructure.model_validate_json(full_text)
             citations_list = []
             citation_verified = []
             for citation in validated.citations:
@@ -184,6 +193,7 @@ def main():
             ConMemory.store(mem)
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
+
             print(f"Response:\n{response}")
             for citations_dict, score in zip(citations_list, citation_verified):
                 if score is None:

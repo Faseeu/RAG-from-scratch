@@ -15,13 +15,19 @@ load_dotenv()  # reads .env file and loads all variables
 
 class GroqClient:
     def __init__(
-        self, model: str, max_tokens: int = settings.max_tokens, output_schema=None
+        self,
+        model: str,
+        max_tokens: int = settings.max_tokens,
+        output_schema=None,
+        stream: bool | None = None,
     ):
 
         self.client = Groq()
         self.model = model
         self.max_tokens = max_tokens
         self.schema = output_schema
+        if stream is None:
+            self.stream = settings.stream_response
 
     def generate(self, user_prompt: str):
 
@@ -33,6 +39,7 @@ class GroqClient:
                         model=self.model,
                         max_tokens=self.max_tokens,
                         messages=[{"role": "user", "content": user_prompt}],
+                        stream=self.stream,
                         response_format={
                             "type": "json_schema",
                             "json_schema": {
@@ -48,10 +55,17 @@ class GroqClient:
                     response = self.client.chat.completions.create(
                         model=self.model,
                         max_tokens=self.max_tokens,
+                        stream=self.stream,
                         messages=[{"role": "user", "content": user_prompt}],
                     )
+                if self.stream is True:
+                    for chunk in response:
+                        delta = chunk.choices[0].delta.content
+                        if delta:
+                            yield delta
 
-                return response.choices[0].message.content
+                else:
+                    return response.choices[0].message.content
 
             except RateLimitError as e:
                 max_retries -= 1
