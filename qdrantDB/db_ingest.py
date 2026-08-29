@@ -64,9 +64,10 @@ class Ingest:
 
             if client.collection_exists(entry["collection_name"]):
                 client.delete_collection(entry["collection_name"])
-            collections_index.catalog = [
-                e for e in collections_index.catalog if e["file_hash"] != self.file_hash
-            ]
+            # collections_index.catalog = [
+            #     e for e in collections_index.catalog if e["file_hash"] != self.file_hash
+            # ]
+            collections_index.remove_by_hash(self.file_hash)
             break
 
         self.batch_size = batch_size or settings.batch_size
