@@ -14,12 +14,12 @@ rewriter = GroqClient(model=settings.router_llm_model, output_schema=QueryStruct
 
 def query_rewriter(query: str, extra_instructions: str):
     imp_instructions = """
-    Create the query in 4 different versions
+    Create the query in 5 different versions
     The goal is to diversify the query
     Think of it like asking 4 different people to search for the same thing, each with a different mindset.
     You're not changing what the user wants.
     You're changing the lens
-
+    - Base/The given one
     - Rephrase/Paraphrase:  Same question, different words (synonyms, different sentence structure)
     - Broaden(Zoom out):    Make the query more general/high-level
     - Narrow (zoom in):     Make the query more specific — add assumed detail
