@@ -1,87 +1,68 @@
-.venv
-.vscode
-__pycache__
-.env
-.python
-.vscode/
-.vscode
-# ===========================
+# ============================================================
+# NOTE: a "#" only starts a comment at the BEGINNING of a line.
+# Never put a comment on the same line as a pattern —
+# e.g. `*.json  # comment` is a broken pattern that matches nothing.
+# ============================================================
+
+# ============================================================
 # SECRETS — never commit these
-# ===========================
+# ============================================================
 .env
 .env.*
 *.env
 
-# ===========================
+# ============================================================
 # PYTHON
-# ===========================
+# ============================================================
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-.Python
-epubtotxt.py
-# virtual environments
-venv/
-.venv/
-env/
-ENV/
+*.egg-info/
+build/
+dist/
 
-# ===========================
-# DATA / VECTOR STORE
-# ===========================
-*.json          # remove this line if you want to commit other JSONs
-RAG.json        # or be specific, just ignore your vector store
-data/
-sessions/*.json
-Fluent_Python.txt
+# Virtual environments
+.venv/
+venv/
+env/
+
+# ============================================================
+# RUNTIME STATE — generated while the app runs, never commit
+# ============================================================
+# Generated vector store (core/storage.py)
+data/RAG.json
+# Tunable-settings snapshot (settings.save())
+data/settings.json
+# Conversation memory & session files (memory.py)
 conversation_memory.json
-utils/cognitive_reader_colab_processor.ipynb
-utils/html_visualizer.py
-utils/notebook_generator.py
-utils/via_negativa_features.py
-utils/cleanRAG.py
-test.py
-# ===========================
-# VSCODIUM / VSCODE
-# ===========================
+sessions/
+# Qdrant local / docker storage
+qdrant_storage/
+# PDF export scratch directory
+pdf-forge-exports/
+
+# ============================================================
+# EDITORS / IDE
+# ============================================================
 .vscode/
 .vscodium/
+.idea/
 *.code-workspace
 
-# ===========================
+# ============================================================
 # OS GARBAGE
-# ===========================
-# mac
+# ============================================================
+# macOS
 .DS_Store
 .AppleDouble
-
-# windows
+# Windows
 Thumbs.db
 desktop.ini
-
-# linux
+# Linux
 *~
 
-# ===========================
+# ============================================================
 # LOGS / MISC
-# ===========================
+# ============================================================
 *.log
 *.tmp
 *.swp
-
-
-
-Fluent Python.txt
-
-sessions/20260728_090135yo.json
-sessions
-RAG-from-scratch_notebook.ipynb
-
-RAG-from-scratch_report.html
-# python3 utils/notebook_generator.py --html
-qdrant_storage/
-qdrant_storage
-pdf-forge-exports/
-pdf-forge-exports
-THINKING.md
