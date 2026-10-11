@@ -11,6 +11,7 @@
 .env.*
 *.env
 
+
 # ============================================================
 # PYTHON
 # ============================================================
@@ -19,7 +20,11 @@ __pycache__/
 *.egg-info/
 build/
 dist/
-
+__pycache__
+.env
+.python
+.vscode/
+.vscode
 # Virtual environments
 .venv/
 venv/
@@ -66,3 +71,8 @@ desktop.ini
 *.log
 *.tmp
 *.swp
+
+
+utils/
+data/
+THINKING.md
