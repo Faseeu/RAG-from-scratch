@@ -66,7 +66,7 @@ class GroqClient:
                 if self.stream is True:
                     pieces = []
                     for token in _iter_token(response):
-                        print(token, end="", flush="")
+                        print(token, end="", flush=True)
                         pieces.append(token)
                     print()
                     return "".join(pieces)

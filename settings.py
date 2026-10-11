@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 TUNABLE = {
@@ -68,7 +69,19 @@ class Settings(BaseSettings):
     collection_name: str = ""
 
     # BM25 Parameters
-    RAG_text_filename: str = "data/RAG.json"
+    RAG_text_filename: str = Field(
+        default="data/RAG.json",
+        validation_alias=AliasChoices("RAG_text_filename", "rag_filename"),
+    )
+
+    @property
+    def rag_filename(self) -> str:
+        """Compatibility spelling for the shared lexical-corpus file setting."""
+        return self.RAG_text_filename
+
+    @rag_filename.setter
+    def rag_filename(self, value: str) -> None:
+        self.RAG_text_filename = value
 
     # Preprocessor Parameters
     embed_cache_store: str = "data/faq_enteries.json"
@@ -84,4 +97,8 @@ class Settings(BaseSettings):
 settings = Settings()
 p = Path("data/settings.json")
 if p.exists():
-    settings = settings.model_copy(update=json.loads(p.read_text()))
+    saved_settings = json.loads(p.read_text())
+    # model_copy does not resolve validation aliases; normalize the legacy key.
+    if "rag_filename" in saved_settings:
+        saved_settings.setdefault("RAG_text_filename", saved_settings.pop("rag_filename"))
+    settings = settings.model_copy(update=saved_settings)

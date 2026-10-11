@@ -15,37 +15,41 @@ class Chunk:
 
 def retrieve(
     query: str,
-    filter=None,
+    query_filter=None,
     threshold: float | None = None,
     top_k: int | None = None,
     collection_name: str | None = None,
+    *,
+    filter=None,
 ):
+    # Keep main's old filter keyword and the branch's query_filter spelling.
+    # Both remain unused, as before; applying filters needs separate implementation.
     if threshold is None:
         threshold = settings.retrieval_threshold
     if top_k is None:
         top_k = settings.retrieval_top_k
     if collection_name is None:
         collection_name = settings.collection_name
-    col = None
+    matched_collection = None
     for collection in collections_index.catalog:
         if collection["collection_name"] == collection_name:
-            col = collection
+            matched_collection = collection
             break
 
-    if col is None:
+    if matched_collection is None:
         raise RuntimeError(f"'{collection_name}' not in registry. Ingest first.")
 
-    if col.get("embedding_model") != settings.embedding_model:
+    if matched_collection.get("embedding_model") != settings.embedding_model:
         raise RuntimeError(
-            f"Collection built with {col.get('embedding_model')}, "
+            f"Collection built with {matched_collection.get('embedding_model')}, "
             f"querying with {settings.embedding_model}. Delete collection + registry row, re-ingest."
         )
 
-    # if filter is None:
-    #     filter = {"title": "The Foundation Trilogy"}
+    # if query_filter is None:
+    #     query_filter = {"title": "The Foundation Trilogy"}
     # filterKey: str
     # filterValue: str
-    # for key, value in filter.items():
+    # for key, value in query_filter.items():
     #     filterKey = key
     #     filterValue = value
 

@@ -11,34 +11,34 @@ from settings import settings
 
 
 class BM25:
-    def __init__(self, corpus=None, filename=settings.RAG_text_filename):
+    def __init__(self, corpus=None, filename=settings.rag_filename):
         if corpus is None:
             data = load(filename)
             self.corpus = [vector["chunk"] for vector in data]
         else:
             self.corpus = corpus
-        self.tk_corpus = self.tokenize(self.corpus)
-        self.bm25 = BM25Okapi(self.tk_corpus, k1=1.2, b=0.3)
+        self.tokenized_corpus = self.tokenize(self.corpus)
+        self.bm25 = BM25Okapi(self.tokenized_corpus, k1=1.2, b=0.3)
 
     def bm25_search(self, query="Earth\n><?!", top_k: int = settings.retrieval_top_k):
         # Gives the dict of the VecterDB(here it is 'RAG.json')
 
         # corpus = [vector["chunk"] for vector in data]
         # print(corpus)
-        # corpus = remove_puncutation(corpus)
+        # corpus = remove_punctuation(corpus)
         # print(corpus)
         # print(len(corpus))
 
         # print(tk)
-        # print(len(tk_corpus))
+        # print(len(tokenized_corpus))
 
-        tk_query = self.tokenize([query])[0]
-        if not tk_query:
+        tokenized_query = self.tokenize([query])[0]
+        if not tokenized_query:
             return []
-        # print(tk_query)
-        scores = self.score(tk_query)
-        # bm25 = BM25Okapi(tk_corpus)
-        # scores = bm25.get_scores(tk_query)
+        # print(tokenized_query)
+        scores = self.score(tokenized_query)
+        # bm25 = BM25Okapi(tokenized_corpus)
+        # scores = bm25.get_scores(tokenized_query)
 
         # print(len(scores))
         # print(scores[1])
@@ -49,15 +49,15 @@ class BM25:
             if score > 0
         ]
         # print(score_list)
-        scores_sort = sorted(score_list, key=lambda x: x["score"], reverse=True)
-        # pprint(scores_sort[:3])
-        top_scores = [score["chunk"] for score in scores_sort[:top_k]]
+        sorted_scores = sorted(score_list, key=lambda x: x["score"], reverse=True)
+        # pprint(sorted_scores[:3])
+        top_scores = [score["chunk"] for score in sorted_scores[:top_k]]
         # print(top_scores)
         return top_scores
 
-    def score(self, tk_query):
+    def score(self, tokenized_query):
         # Very Very sloww
-        scores = self.bm25.get_scores(tk_query)
+        scores = self.bm25.get_scores(tokenized_query)
         return scores
 
     def tokenize(self, textlist: list[str]):
@@ -73,7 +73,7 @@ class BM25:
         # ]  # Decapitalizes the text
         # print(tokenized)
         # tokenized = [
-        #     self.remove_puncutation(text) for text in tokenized if text
+        #     self.remove_punctuation(text) for text in tokenized if text
         # ]  # Removes all punctuation
 
         # # tokenized = [
@@ -82,7 +82,7 @@ class BM25:
         # pprint(tokenized)
         return tokenized
 
-    def remove_puncutation(self, chunk):
+    def remove_punctuation(self, chunk):
         results = chunk
         # print(results)
 

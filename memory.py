@@ -98,10 +98,12 @@ class ConversationMemory:
         last_N: int = 12,
         data_dir: Path = "sessions",
         # filename="conversation_memory.json",
+        *,
+        last_n: int | None = None,
     ):
         self.session = session
 
-        self.last_N = last_N
+        self.last_N = last_N if last_n is None else last_n
 
         self.data_dir = data_dir
         os.makedirs(self.data_dir, exist_ok=True)
@@ -111,6 +113,15 @@ class ConversationMemory:
         # if self.filepath.exists() is not True:
         #     self.filepath.touch(exist_ok=True)
         self.history = self._load_once()
+
+    @property
+    def last_n(self) -> int:
+        """Compatibility spelling; both branches share one memory-window value."""
+        return self.last_N
+
+    @last_n.setter
+    def last_n(self, value: int) -> None:
+        self.last_N = value
 
     def load(self, complete: bool = False):
         """Reads memory from history"""
@@ -196,14 +207,14 @@ def resume_or_create_session():
     if option == "n":
         # session_name = input("What do you want to name this conversation? :\n")
         session = Session.create_new()
-        newSession = ConversationMemory(session)
+        new_session = ConversationMemory(session)
         catalog = SessionsIndex()
         catalog.register(session)
         print(
             f"REGISTERING: id={session.session_id}, name={session.session_name}, created={session.created_at}"
         )
 
-        return newSession
+        return new_session
     elif option == "r":
         catalog = SessionsIndex()
         sessions = catalog.show()

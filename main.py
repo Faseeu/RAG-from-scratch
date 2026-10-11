@@ -62,13 +62,13 @@ def main():
     corpus = get_corpus_from_qdrant()
     bm25 = BM25(corpus=corpus)
     # convo_name = input("What do you want to name this conversation? :\n")
-    # ConMemory = ConversationMemory(session_id="1", session_name=convo_name)
-    ConMemory = resume_or_create_session()
+    # conversation_memory = ConversationMemory(session_id="1", session_name=convo_name)
+    conversation_memory = resume_or_create_session()
     from search.reranker import rerank
 
     while True:
         turn += 1
-        memory = ConMemory.load()
+        memory = conversation_memory.load()
         user_query: str = input("Enter your QUERY: \n")
         if (
             user_query == "q"
@@ -93,7 +93,7 @@ def main():
         if preprocessed is not None:
             print(f"Response from 4 layers:\n{preprocessed}")
         else:
-            # memory = ConMemory.load()
+            # memory = conversation_memory.load()
             context_query = contextualize_query(user_query, memory)
 
             decomposed_query = query_decomposer(context_query)  # Had user query before
@@ -105,11 +105,11 @@ def main():
                 # query = user_query
                 vector_query_list = query_rewriter(
                     query,
-                    "Optimize for vector search only. Keep it natural, have semantic phrasing (meaning-rich) in all 4 versions",
+                    "Optimize for vector search only. Keep it natural, have semantic phrasing (meaning-rich) in all 5 versions (including the original)",
                 )
                 bm25_query_list = query_rewriter(
                     query,
-                    "Optimize for BM25 search only. keep it precise, keyword-dense phrasing (exact terms) in all 4 versions",
+                    "Optimize for BM25 search only. keep it precise, keyword-dense phrasing (exact terms) in all 5 versions (including the original)",
                 )
                 print(vector_query_list)
                 print(bm25_query_list)
@@ -153,7 +153,7 @@ def main():
                 full_query_chunks.extend(top_chunks)
             # if turn != 1:
             # memory = conMemory("load")
-            memory = ConMemory.load()
+            memory = conversation_memory.load()
             # else:
             #     memory = {}
             prompt = prompt_builder(
@@ -161,11 +161,9 @@ def main():
             )  # Had user_query
             # print(prompt)
             resp = client.generate(prompt)
-            full_text = ""
-            for token in resp:
-                print(token, end="", flush=True)
-                full_text += token
-            validated = AnswerStructure.model_validate_json(full_text)
+            # GroqClient prints streamed tokens and returns the completed string.
+            # Do not replay that string character-by-character here.
+            validated = AnswerStructure.model_validate_json(resp)
             citations_list = []
             citation_verified = []
             for citation in validated.citations:
@@ -190,7 +188,7 @@ def main():
             # conMemory("store", mem)
             mem = MemTurn(question=context_query, answer=response)
 
-            ConMemory.store(mem)
+            conversation_memory.store(mem)
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
 

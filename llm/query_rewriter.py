@@ -13,10 +13,10 @@ rewriter = GroqClient(model=settings.router_llm_model, output_schema=QueryStruct
 
 
 def query_rewriter(query: str, extra_instructions: str):
-    imp_instructions = """
+    instructions = """
     Create the query in 5 different versions
     The goal is to diversify the query
-    Think of it like asking 4 different people to search for the same thing, each with a different mindset.
+    Think of it like asking 5 different people to search for the same thing, each with a different mindset.
     You're not changing what the user wants.
     You're changing the lens
     - Base/The given one
@@ -42,12 +42,12 @@ def query_rewriter(query: str, extra_instructions: str):
     Never add anything unecessary.
     Never write any preamble
     Never write section dividers
-    Always only write the 4 queries as you are instructed
+    Always only write the 5 queries as you are instructed
     Nothing more than that
     Here is the QUERY:
     {query}
     Very Important instructions:
-    {imp_instructions}
+    {instructions}
     {extra_instructions}
 
     """
