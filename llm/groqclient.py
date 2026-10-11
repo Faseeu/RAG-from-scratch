@@ -3,6 +3,8 @@ import time
 from dotenv import load_dotenv
 from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
 
+from interface.contracts import AIClient
+from interface.data import GenerationRequest,GenerationResult
 from settings import settings
 
 # import os
@@ -19,7 +21,7 @@ def _iter_token(response):
             yield delta
 
 
-class GroqClient:
+class GroqClient(AIClient):
     def __init__(
         self,
         model: str,
@@ -34,7 +36,10 @@ class GroqClient:
         self.schema = output_schema
         self.stream = settings.stream_response if stream is None else stream
 
-    def generate(self, user_prompt: str):
+    def generate(
+        self,
+        request: GenerationRequest,
+    ):
 
         max_retries = 3
         for i in range(max_retries):
@@ -43,7 +48,7 @@ class GroqClient:
                     response = self.client.chat.completions.create(
                         model=self.model,
                         max_tokens=self.max_tokens,
-                        messages=[{"role": "user", "content": user_prompt}],
+                        messages=[{"role": "user", "content": GenerationRequest.user_prompt}],
                         stream=self.stream,
                         response_format={
                             "type": "json_schema",
@@ -61,7 +66,7 @@ class GroqClient:
                         model=self.model,
                         max_tokens=self.max_tokens,
                         stream=self.stream,
-                        messages=[{"role": "user", "content": user_prompt}],
+                        messages=[{"role": "user", "content": GenerationRequest.user_prompt}],
                     )
                 if self.stream is True:
                     pieces = []
