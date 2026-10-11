@@ -19,7 +19,11 @@ def retrieve(
     threshold: float | None = None,
     top_k: int | None = None,
     collection_name: str | None = None,
+    *,
+    filter=None,
 ):
+    # Keep main's old filter keyword and the branch's query_filter spelling.
+    # Both remain unused, as before; applying filters needs separate implementation.
     if threshold is None:
         threshold = settings.retrieval_threshold
     if top_k is None:
@@ -35,7 +39,7 @@ def retrieve(
     if matched_collection is None:
         raise RuntimeError(f"'{collection_name}' not in registry. Ingest first.")
 
-    if matched_collection["embedding_model"] != settings.embedding_model:
+    if matched_collection.get("embedding_model") != settings.embedding_model:
         raise RuntimeError(
             f"Collection built with {matched_collection.get('embedding_model')}, "
             f"querying with {settings.embedding_model}. Delete collection + registry row, re-ingest."

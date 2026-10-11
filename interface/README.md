@@ -5,7 +5,7 @@ checklist, community-only Jev policy, model reuse rules and stopping criteria.
 The checklist explicitly separates completed scaffolding from pending behavior.
 
 Nothing here is connected to existing code. No adapters, conversions, ingestion
-algorithm, provider calls, or changes to existing functionality are implemented.
+algorithm, provider calls, or runtime pipeline integrations are implemented by this package.
 
 - `boundary.py`: Pydantic models for external inputs and outputs.
 - `data.py`: dataclasses for internal function-to-function data.
@@ -72,3 +72,35 @@ Class docstrings identify the producer/consumer stage and boundary. Reuse
 for external vector reads and writes. The flat JSON field shapes are unchanged.
 Pydantic/dataclass counterparts are deliberate boundary representations, not
 per-function variants. Existing runtime models are not migrated by this package.
+
+
+## Compatibility with main's interfaces
+
+`interface/` owns the definitions. `interfaces/db.py` is a compatibility re-export,
+not a second implementation; existing plural-package imports continue to work.
+`interface/db.py` preserves main's original scaffold signatures and fixes the
+abstract-class instantiation in its type annotations. Neither scaffold is wired
+into the live pipeline.
+
+The legacy DB uses `connect/ingest/retrieve`, whereas `contracts.VectorDB` exposes
+collection management, upsert, search and scroll. Likewise, the legacy boundary
+chunk uses `chunk_text` without `document_id`, and its internal payload has explicit
+page/title/token fields. These are not equivalent to `boundary.ChunkPayload` or
+`data.Chunk`, so aliasing them would silently break their shapes. They remain
+compatibility contracts, not new per-stage variants. New code should use
+`contracts.py`, `data.py` and `boundary.py`; migrating legacy callers requires an
+explicit adapter decision.
+
+Offline checks (with Pydantic 2, pydantic-settings, requests, python-dotenv and
+groq installed; no models/services required):
+
+```sh
+python -m unittest discover -s interface/tests -v
+python -m unittest discover -s experimental/jev/tests -v
+python -m unittest discover -s tests -v
+```
+
+The merge-regression suite mocks providers, embeddings, PDF libraries and the
+reranker, and writes only to temporary directories. It checks main's retained
+behavior plus compatibility names and single-pass streaming display; it is not
+a live RAG quality evaluation.

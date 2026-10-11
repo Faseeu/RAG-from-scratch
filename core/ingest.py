@@ -1,10 +1,14 @@
 from core.loader import load_textfile
 from core.storage import store
 from core.text_chunker import split_into_chunks
-from embedding.embedding import _batch_embed
+from embedding.batch_embed import _batch_embed
+from settings import settings
 
 
-def ingest(filename="./basic_ai.txt", batch_size=128):
+def ingest(filename="./basic_ai.txt", batch_size=None):
+    if batch_size is None:
+        batch_size = settings.batch_size
+
     text: str = load_textfile(filename)
     chunks: list[str] = split_into_chunks(text)
     all_embeddings: list[list[float]] = _batch_embed()

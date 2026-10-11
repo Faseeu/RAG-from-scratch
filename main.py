@@ -10,10 +10,8 @@ from llm.groqclient import GroqClient
 from llm.query_rewriter import query_rewriter
 from memory import MemTurn, resume_or_create_session
 from prompt_builder import prompt_builder
-from qdrantDB.db_ingest import Ingest
 from qdrantDB.retrieve import get_corpus_from_qdrant, retrieve
 from search.bm25_search import BM25
-from search.reranker import rerank
 from search.rrf_merge import rrf_merge
 from settings import settings
 from verify.answerschema import AnswerStructure
@@ -22,7 +20,7 @@ from verify.quote_score import quote_score
 # from pprint import pprint
 
 
-# TODO: V4 and V5
+# TODO: V5
 def main():
     # print("Hello from rag-from-scratch!")
     # text = load_textfile("./basic_ai.txt")
@@ -40,27 +38,34 @@ def main():
             "DO you want to ingest a file? \nWrite y if yes, any other key = no: "
         )
         if ingest_choice.lower().strip() == "y":
+            from qdrantDB.db_ingest import Ingest
+
             Ingest()
             collections = collections_index.list_collections()
         else:
             return
 
-    choice = int(input("Choose a collection name:- \nEnter the number for it:"))
-    if choice < 0 or choice >= len(collections):
+    choice = input("Choose a collection name:- \nEnter the number for it:")
+    c = int(choice)
+    if c < 0 or c >= len(collections):
         print(f"Invalid choice. Must be 0–{len(collections) - 1}")
         return
 
-    user_choice = collections[choice]
+    user_choice = collections[c]
     settings.collection_name = user_choice
 
     # Ingest()
     turn = 0
-    client = GroqClient(model="openai/gpt-oss-120b", output_schema=AnswerStructure)
+    client = GroqClient(
+        model="openai/gpt-oss-120b", stream=True, output_schema=AnswerStructure
+    )
     corpus = get_corpus_from_qdrant()
     bm25 = BM25(corpus=corpus)
     # convo_name = input("What do you want to name this conversation? :\n")
     # conversation_memory = ConversationMemory(session_id="1", session_name=convo_name)
     conversation_memory = resume_or_create_session()
+    from search.reranker import rerank
+
     while True:
         turn += 1
         memory = conversation_memory.load()
@@ -76,8 +81,10 @@ def main():
             user_query == ""
             or user_query == " "
             or user_query == None
-            or not user_query
+            or not user_query.strip()
         ):
+            continue
+        if not user_query.strip():
             continue
         # Here I seperated the vector and BM25 query rewriting because what
         # They require are opposites
@@ -98,11 +105,11 @@ def main():
                 # query = user_query
                 vector_query_list = query_rewriter(
                     query,
-                    "Optimize for vector search only. Keep it natural, have semantic phrasing (meaning-rich) in all 4 versions",
+                    "Optimize for vector search only. Keep it natural, have semantic phrasing (meaning-rich) in all 5 versions (including the original)",
                 )
                 bm25_query_list = query_rewriter(
                     query,
-                    "Optimize for BM25 search only. keep it precise, keyword-dense phrasing (exact terms) in all 4 versions",
+                    "Optimize for BM25 search only. keep it precise, keyword-dense phrasing (exact terms) in all 5 versions (including the original)",
                 )
                 print(vector_query_list)
                 print(bm25_query_list)
@@ -154,6 +161,8 @@ def main():
             )  # Had user_query
             # print(prompt)
             resp = client.generate(prompt)
+            # GroqClient prints streamed tokens and returns the completed string.
+            # Do not replay that string character-by-character here.
             validated = AnswerStructure.model_validate_json(resp)
             citations_list = []
             citation_verified = []
@@ -182,6 +191,7 @@ def main():
             conversation_memory.store(mem)
             # pprint("Vector Query", vector_query)
             # pprint("BM25 Query", bm25_query)
+
             print(f"Response:\n{response}")
             for citations_dict, score in zip(citations_list, citation_verified):
                 if score is None:

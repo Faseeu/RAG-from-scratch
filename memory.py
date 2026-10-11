@@ -28,9 +28,7 @@ from pathlib import Path
 #         # return full_memory
 
 
-# mem = conMemory("load")
-# print(mem)
-# print(len(mem))
+
 
 # def sessions_index(
 #     session_id=None,
@@ -97,16 +95,15 @@ class ConversationMemory:
     def __init__(
         self,
         session: Session,
-        # session_id=None,
-        # session_name: str = "",
-        # created_at=None,
-        last_n: int = 12,
+        last_N: int = 12,
         data_dir: Path = "sessions",
         # filename="conversation_memory.json",
+        *,
+        last_n: int | None = None,
     ):
         self.session = session
 
-        self.last_n = last_n
+        self.last_N = last_N if last_n is None else last_n
 
         self.data_dir = data_dir
         os.makedirs(self.data_dir, exist_ok=True)
@@ -117,12 +114,21 @@ class ConversationMemory:
         #     self.filepath.touch(exist_ok=True)
         self.history = self._load_once()
 
+    @property
+    def last_n(self) -> int:
+        """Compatibility spelling; both branches share one memory-window value."""
+        return self.last_N
+
+    @last_n.setter
+    def last_n(self, value: int) -> None:
+        self.last_N = value
+
     def load(self, complete: bool = False):
         """Reads memory from history"""
 
         if complete is True:
             return self.history
-        return self.history[-self.last_n :]
+        return self.history[-self.last_N :]
 
     def store(self, memory: MemTurn):
 
@@ -139,7 +145,7 @@ class ConversationMemory:
                 full_memory = json.load(f)
                 if complete is True:
                     return full_memory
-                return full_memory[-self.last_n :]
+                return full_memory[-self.last_N :]
         except (FileNotFoundError, json.JSONDecodeError):
             return []
 
@@ -149,9 +155,9 @@ class ConversationMemory:
 
 
 class SessionsIndex:
-    def __init__(self,data_dir:str = "sessions"):
+    def __init__(self, data_dir: str = "sessions"):
 
-        self.filepath = Path(data_dir)/"sessions_index.json"
+        self.filepath = Path(data_dir) / "sessions_index.json"
         # self.catalog: list[dict[str, str]] = []
 
     def register(self, session: Session):
@@ -159,11 +165,7 @@ class SessionsIndex:
         sessions = self.show()
         # if created_at is None:
         #     created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        # session = {
-        #     "session_id": session_id,
-        #     "session_name": session_name,
-        #     "created_at": created_at,
-        # }
+
         # session = Session(
         #     session_id=session_id,
         #     session_name=session_name,
@@ -211,11 +213,7 @@ def resume_or_create_session():
         print(
             f"REGISTERING: id={session.session_id}, name={session.session_name}, created={session.created_at}"
         )
-        # catalog.register(
-        #     session_id=new_session.session_id,
-        #     session_name=new_session.session_name,
-        #     created_at=new_session.created_at.strftime(time_fmt),
-        # )
+
         return new_session
     elif option == "r":
         catalog = SessionsIndex()
@@ -230,9 +228,6 @@ def resume_or_create_session():
             """)
         session_num = int(input("Enter the Session Number you want to resume:\t"))
         chosen_session = sessions[session_num]
-        # name = chosen_session.session_name
-        # sid = chosen_session.session_id
-        # created_at = datetime.strptime(chosen_session.created_at, time_fmt)
 
         return ConversationMemory(chosen_session)
     else:
@@ -240,8 +235,9 @@ def resume_or_create_session():
         return resume_or_create_session()
 
 
-# mem = ConversationMemory(session_name="yo")
-# mem.store({"question": "test", "answer": "test"})
-# print(mem)
-# memSe = SessionsIndex()
-# print(memSe.show())
+if __name__ == "__maim__":
+    mem = ConversationMemory(session_name="yo")
+    mem.store({"question": "test", "answer": "test"})
+    print(mem)
+    memSe = SessionsIndex()
+    print(memSe.show())

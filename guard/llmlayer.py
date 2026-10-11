@@ -7,13 +7,13 @@ from llm.groqclient import GroqClient
 from settings import settings
 
 
-class ResponseStructure(BaseModel):
+class ResponseModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
     needs_retrieval: bool
     answer: str | None
 
 
-layer4 = GroqClient(model=settings.guard_llm_model, output_schema=ResponseStructure)
+layer4 = GroqClient(model=settings.guard_llm_model, output_schema=ResponseModel)
 
 # formatted_history = ConversationMemory().load()
 
@@ -59,7 +59,8 @@ def llm_call(query, history):
     """
 
     response = layer4.generate(prompt)
-    validated = ResponseStructure.model_validate_json(response)
+    print(response)
+    validated = ResponseModel.model_validate_json(response)
     print(validated)
     if validated.needs_retrieval is False:
         return validated.answer

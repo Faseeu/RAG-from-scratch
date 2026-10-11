@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 TUNABLE = {
@@ -20,6 +21,7 @@ TUNABLE = {
     "router_llm_model",
     "guard_llm_model",
     "max_tokens",
+    "stream_response"
 }
 
 
@@ -42,6 +44,7 @@ class Settings(BaseSettings):
     router_llm_model: str = "openai/gpt-oss-20b"
     guard_llm_model: str = "openai/gpt-oss-20b"
     max_tokens: int = 5000
+    stream_response:bool = False
 
     # Embeddings
     embedding_model: str = "Snowflake/snowflake-arctic-embed-s"
@@ -66,11 +69,25 @@ class Settings(BaseSettings):
     collection_name: str = ""
 
     # BM25 Parameters
-    rag_filename: str = "data/RAG.json"
+    RAG_text_filename: str = Field(
+        default="data/RAG.json",
+        validation_alias=AliasChoices("RAG_text_filename", "rag_filename"),
+    )
+
+    @property
+    def rag_filename(self) -> str:
+        """Compatibility spelling for the shared lexical-corpus file setting."""
+        return self.RAG_text_filename
+
+    @rag_filename.setter
+    def rag_filename(self, value: str) -> None:
+        self.RAG_text_filename = value
 
     # Preprocessor Parameters
     embed_cache_store: str = "data/faq_enteries.json"
     hashmap_store: str = "data/basic_greets.json"
+
+
 
     def save(self, path=Path("data/settings.json")):
         data = self.model_dump(include=TUNABLE)
@@ -80,4 +97,8 @@ class Settings(BaseSettings):
 settings = Settings()
 p = Path("data/settings.json")
 if p.exists():
-    settings = settings.model_copy(update=json.loads(p.read_text()))
+    saved_settings = json.loads(p.read_text())
+    # model_copy does not resolve validation aliases; normalize the legacy key.
+    if "rag_filename" in saved_settings:
+        saved_settings.setdefault("RAG_text_filename", saved_settings.pop("rag_filename"))
+    settings = settings.model_copy(update=saved_settings)
