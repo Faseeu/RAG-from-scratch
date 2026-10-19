@@ -1,6 +1,7 @@
 from llm.groqclient import GroqClient
 from settings import settings
-from interface.
+
+# from interface.
 contextualizer = GroqClient(model=settings.router_llm_model)
 
 
