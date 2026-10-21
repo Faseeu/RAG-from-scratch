@@ -1,6 +1,6 @@
+from core.chunker.text_chunker import split_into_chunks
 from core.loader import load_textfile
 from core.storage import store
-from core.text_chunker import split_into_chunks
 from embedding.batch_embed import _batch_embed
 from settings import settings
 
