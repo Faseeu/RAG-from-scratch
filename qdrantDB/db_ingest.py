@@ -3,14 +3,14 @@ import os
 import uuid
 from dataclasses import asdict
 
+from core.text_chunker import split_into_chunks
 from qdrant_client import models
 
+from core.chunker.chunker import token_chunk
 from core.loader import load_textfile
 from core.pdf_loader import PDFParser
 from core.register_collection import Collection, collections_index
-from core.text_chunker import split_into_chunks
 from embedding.batch_embed import _batch_embed
-from qdrantDB.chunker import token_chunk
 from qdrantDB.client import client
 from settings import settings
 from utils.sanitize_name import sanitize_name
