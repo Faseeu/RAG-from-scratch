@@ -52,8 +52,8 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.addCleanup(self.capture.__exit__, None, None, None)
 
     def test_legacy_interface_exports_keep_identity_and_shapes(self):
-        from interface import db
-        from interfaces import db as legacy
+        from rag.interface import db
+        from rag.interfaces import db as legacy
 
         for name in legacy.__all__:
             self.assertIs(getattr(legacy, name), getattr(db, name))
@@ -65,7 +65,7 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.assertEqual(payload.page_no, 1)
 
     def test_settings_accept_both_names_and_share_one_value(self):
-        module = load_file("settings.py")
+        module = load_file("src/rag/config.py")
         for key in ("RAG_text_filename", "rag_filename"):
             settings = module.Settings(**{key: "custom.json"}, stream_response=True)
             self.assertEqual(settings.rag_filename, "custom.json")
@@ -77,7 +77,7 @@ class MergeCompatibilityTests(unittest.TestCase):
             self.assertTrue(settings.stream_response)
 
     def test_settings_accept_both_environment_names(self):
-        cls = load_file("settings.py").Settings
+        cls = load_file("src/rag/config.py").Settings
         for name in ("RAG_TEXT_FILENAME", "RAG_FILENAME"):
             with patch.dict(os.environ, {name: "env.json"}, clear=True):
                 self.assertEqual(cls().rag_filename, "env.json")
@@ -85,13 +85,13 @@ class MergeCompatibilityTests(unittest.TestCase):
     def test_saved_settings_accept_both_names_and_streaming(self):
         for key in ("RAG_text_filename", "rag_filename"):
             Path("data/settings.json").write_text(json.dumps({key: "saved.json", "stream_response": True}))
-            settings = load_file("settings.py").settings
+            settings = load_file("src/rag/config.py").settings
             self.assertEqual(settings.rag_filename, "saved.json")
             self.assertEqual(settings.RAG_text_filename, "saved.json")
             self.assertTrue(settings.stream_response)
 
     def test_memory_both_window_names_and_persistence(self):
-        module = load_file("memory.py")
+        module = load_file("src/rag/memory/conversation.py")
         session = module.Session("s", "test", "2026-10-11")
         memory = module.ConversationMemory(session, last_n=1, data_dir=Path("sessions"))
         for i in range(3):
@@ -107,15 +107,15 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.assertEqual(len(resumed.load(complete=True)), 3)
 
     def test_registry_deletion_still_persists(self):
-        module = load_file("core/register_collection.py")
+        module = load_file("src/rag/ingest/registry.py")
         registry = module.collections_index
         registry.catalog = [{"file_hash": "remove"}, {"file_hash": "keep"}]
         registry.remove_by_hash("remove")
         self.assertEqual(module.CollectionsIndex().catalog, [{"file_hash": "keep"}])
 
     def groq_module(self):
-        return load_file("llm/groqclient.py", {
-            "settings": stub(settings=NS(max_tokens=100, stream_response=False)),
+        return load_file("src/rag/providers/llm/groqclient.py", {
+            "rag.config": stub(settings=NS(max_tokens=100, stream_response=False)),
             "dotenv": stub(load_dotenv=Mock()),
         })
 
@@ -151,11 +151,11 @@ class MergeCompatibilityTests(unittest.TestCase):
     def retrieval_module(self, catalog):
         self.embed = Mock(return_value=[[0.1]])
         self.db = Mock()
-        return load_file("qdrantDB/retrieve.py", {
-            "settings": stub(settings=NS(collection_name="docs", embedding_model="model", retrieval_top_k=5, retrieval_threshold=0.5)),
-            "core.register_collection": stub(collections_index=NS(catalog=catalog)),
-            "embedding.embedding": stub(embed=self.embed),
-            "qdrantDB.client": stub(client=self.db),
+        return load_file("src/rag/retrieval/dense.py", {
+            "rag.config": stub(settings=NS(collection_name="docs", embedding_model="model", retrieval_top_k=5, retrieval_threshold=0.5)),
+            "rag.ingest.registry": stub(collections_index=NS(catalog=catalog)),
+            "rag.providers.embeddings.embedding": stub(embed=self.embed),
+            "rag.providers.vectorstore.client": stub(client=self.db),
         })
 
     def test_missing_embedding_model_is_a_clear_error_not_keyerror(self):
@@ -183,9 +183,9 @@ class MergeCompatibilityTests(unittest.TestCase):
         client = Mock()
         versions = ["original", "paraphrase", "broaden", "narrow", "perspective"]
         client.generate.return_value = json.dumps({"query": versions})
-        module = load_file("llm/query_rewriter.py", {
-            "llm.groqclient": stub(GroqClient=Mock(return_value=client)),
-            "settings": stub(settings=NS(router_llm_model="model")),
+        module = load_file("src/rag/providers/llm/query_rewriter.py", {
+            "rag.providers.llm.groqclient": stub(GroqClient=Mock(return_value=client)),
+            "rag.config": stub(settings=NS(router_llm_model="model")),
         })
         self.assertEqual(module.query_rewriter("original", "use vector search"), versions)
         prompt = client.generate.call_args.args[0]
@@ -198,10 +198,10 @@ class MergeCompatibilityTests(unittest.TestCase):
             metadata = {"title": "Book"}
         document = Document([object(), object()])
         markdown = Mock(side_effect=[" # Page one ", " Page two "])
-        module = load_file("core/pdf_loader.py", {
+        module = load_file("src/rag/ingest/loaders/pdf.py", {
             "pymupdf": stub(open=Mock(return_value=document)),
             "pymupdf4llm": stub(to_markdown=markdown),
-            "settings": stub(settings=NS(filename="book.pdf")),
+            "rag.config": stub(settings=NS(filename="book.pdf")),
         })
         parser = module.PDFParser()
         result = parser.parse()
@@ -213,8 +213,8 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.assertEqual(markdown.call_count, 2)
 
     def test_main_parses_completed_stream_and_stores_answer(self):
-        from verify.answerschema import AnswerStructure
-        from memory import MemTurn
+        from rag.verify.answerschema import AnswerStructure
+        from rag.memory.conversation import MemTurn
         memory = Mock()
         memory.load.return_value = []
         raw = json.dumps({"answer": "Grounded answer", "citations": [{"chunk_id": 0, "quote": "evidence"}]})
@@ -222,22 +222,22 @@ class MergeCompatibilityTests(unittest.TestCase):
         client.generate.return_value = raw
         factory = Mock(return_value=client)
         rerank = Mock(return_value=["evidence"])
-        module = load_file("main.py", {
-            "core.contextualize_query": stub(contextualize_query=Mock(return_value="context query")),
-            "core.register_collection": stub(collections_index=NS(list_collections=Mock(return_value=["docs"]))),
-            "guard.preprocessor": stub(preprocessor=Mock(return_value=None)),
-            "llm.decomposer": stub(query_decomposer=Mock(return_value=["context query"])),
-            "llm.groqclient": stub(GroqClient=factory),
-            "llm.query_rewriter": stub(query_rewriter=Mock(return_value=["query"])),
-            "memory": stub(MemTurn=MemTurn, resume_or_create_session=Mock(return_value=memory)),
-            "prompt_builder": stub(prompt_builder=Mock(return_value="prompt")),
-            "qdrantDB.retrieve": stub(get_corpus_from_qdrant=Mock(return_value=["evidence"]), retrieve=Mock(return_value=[NS(text="evidence")])),
-            "search.bm25_search": stub(BM25=Mock(return_value=NS(bm25_search=Mock(return_value=["evidence"])))),
-            "search.rrf_merge": stub(rrf_merge=Mock(return_value=["evidence"])),
-            "settings": stub(settings=NS()),
-            "verify.quote_score": stub(quote_score=Mock(return_value=1.0)),
+        module = load_file("apps/cli/chat.py", {
+            "rag.query.contextualize": stub(contextualize_query=Mock(return_value="context query")),
+            "rag.ingest.registry": stub(collections_index=NS(list_collections=Mock(return_value=["docs"]))),
+            "rag.query.guard.preprocessor": stub(preprocessor=Mock(return_value=None)),
+            "rag.providers.llm.decomposer": stub(query_decomposer=Mock(return_value=["context query"])),
+            "rag.providers.llm.groqclient": stub(GroqClient=factory),
+            "rag.providers.llm.query_rewriter": stub(query_rewriter=Mock(return_value=["query"])),
+            "rag.memory.conversation": stub(MemTurn=MemTurn, resume_or_create_session=Mock(return_value=memory)),
+            "rag.generation.prompt": stub(prompt_builder=Mock(return_value="prompt")),
+            "rag.retrieval.dense": stub(get_corpus_from_qdrant=Mock(return_value=["evidence"]), retrieve=Mock(return_value=[NS(text="evidence")])),
+            "rag.retrieval.sparse": stub(BM25=Mock(return_value=NS(bm25_search=Mock(return_value=["evidence"])))),
+            "rag.retrieval.fusion": stub(rrf_merge=Mock(return_value=["evidence"])),
+            "rag.config": stub(settings=NS()),
+            "rag.verify.quote_score": stub(quote_score=Mock(return_value=1.0)),
         })
-        with patch.dict(sys.modules, {"search.reranker": stub(rerank=rerank)}), patch("builtins.input", side_effect=["0", "question", "exit"]):
+        with patch.dict(sys.modules, {"rag.retrieval.rerank": stub(rerank=rerank)}), patch("builtins.input", side_effect=["0", "question", "exit"]):
             module.main()
         self.assertTrue(factory.call_args.kwargs["stream"])
         self.assertIs(factory.call_args.kwargs["output_schema"], AnswerStructure)

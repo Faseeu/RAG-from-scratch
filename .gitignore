@@ -73,6 +73,8 @@ desktop.ini
 *.swp
 
 
-utils/
-data/
+data/*
+!data/seed/
+data/seed/*
+!data/seed/**
 THINKING.md

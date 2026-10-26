@@ -8,9 +8,9 @@ from typing import cast
 import requests
 from pydantic import ValidationError
 
-from interface.jev import boundary as wire
-from interface.jev import data
-from interface.jev.client import JevClient
+from rag.interface.jev import boundary as wire
+from rag.interface.jev import data
+from rag.interface.jev.client import JevClient
 
 from .errors import JevHTTPError, JevResponseError, JevTransportError
 

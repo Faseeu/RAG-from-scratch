@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "rag-from-scratch"
 version = "0.1.0"
@@ -22,6 +26,12 @@ dependencies = [
     "torch>=2.12.1",
 ]
 
+[project.scripts]
+rag-chat = "apps.cli.chat:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag", "apps"]
+
 [[tool.uv.index]]
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
@@ -30,5 +40,9 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 
+[tool.ruff]
+src = ["src"]
+line-length = 100
+
 [tool.ruff.lint]
-extend-select = ["I"]   
+select = ["E", "F", "I", "B", "UP"]
