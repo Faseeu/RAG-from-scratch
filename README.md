@@ -62,25 +62,28 @@ tests/                    # compatibility and contract tests
 
 ## Getting started
 
-**Prerequisites:** Python 3.12+, [`uv`](https://docs.astral.sh/uv/), Docker (for Qdrant).
+**Prerequisites:** Python 3.12+, [`uv`](https://docs.astral.sh/uv/), Docker Compose, and a Groq API key.
 
 ```bash
-# 1. Install dependencies
 uv sync
+cp .env.example .env
+# Add your GROQ_API_KEY to .env
 
-# 2. Start Qdrant
-docker run -p 6333:6333 -p 6334:6334 \
-  -v $(pwd)/qdrant_storage:/qdrant/storage \
-  qdrant/qdrant
-
-# 3. Create your .env (this file is gitignored — never commit it)
-echo "GROQ_API_KEY=your-key-here" > .env
-
-# 4. Run
+docker compose up -d qdrant
 uv run rag-chat
 ```
 
-On the first run there are no collections yet, so the CLI offers to ingest. After that, pick a collection and ask away. Type `q` to quit. The sample text corpus is at `data/seed/basic_ai.txt`.
+To run the chat in Docker instead of locally:
+
+```bash
+cp .env.example .env
+# Add your GROQ_API_KEY to .env
+docker compose build
+docker compose up -d qdrant
+docker compose run --rm chat
+```
+
+Qdrant, application data, and downloaded models use persistent Docker volumes. To ingest a document in Docker, place it in the gitignored `documents/` staging folder and run `docker compose run --rm data-import`; this copies files into the app data volume. The current CLI still expects its configured PDF filename (`Daniel Kahneman-Thinking, Fast and Slow .pdf`) when creating a collection, so that name must be present for first-time ingestion. Then run the chat service and type `q` to quit. The sample text corpus is at `data/seed/basic_ai.txt`.
 
 ### Environment variables
 
@@ -116,4 +119,5 @@ Every tunable lives in `src/rag/config.py` and can be overridden from `.env` (py
 
 - Earlier iterations (V1–V4) used a flat JSON vector store — that code lives on in `src/rag/providers/vectorstore/storage.py` and `src/rag/ingest/ingest.py`, and `src/rag/utils/cleanRAG.py` is a small maintenance script for it.
 - Everything generated at runtime — `sessions/`, `qdrant_storage/`, `data/RAG.json`, `conversation_memory.json` — is gitignored on purpose; the repo only carries source and seed data.
-- Tests: `uv run pytest`
+- Developer tasks: `just test`, `just lint`, `just fix`, and `just build` (requires `just` and `uv`).
+- CI runs the offline test suite, Ruff lint, and a wheel build on Python 3.12.

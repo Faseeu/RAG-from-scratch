@@ -1,0 +1,39 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  chat:
+    build: .
+    env_file:
+      - .env
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6333"
+      HF_HOME: /home/rag/.cache/huggingface
+    depends_on:
+      - qdrant
+    volumes:
+      - rag_data:/app/data
+      - model_cache:/home/rag/.cache/huggingface
+    stdin_open: true
+    tty: true
+
+  data-import:
+    build: .
+    profiles: ["tools"]
+    volumes:
+      - rag_data:/app/data
+      - ./documents:/imports:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command: "cp -n /imports/* /app/data/"
+
+volumes:
+  qdrant_data:
+  rag_data:
+  model_cache:

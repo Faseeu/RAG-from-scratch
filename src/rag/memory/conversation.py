@@ -200,7 +200,6 @@ class SessionsIndex:
 
 
 def resume_or_create_session():
-    time_fmt = "%Y-%m-%dT%H:%M:%S.%f"
     option = input(
         "Enter 'n' if you want to create a new session:\t\nEnter 'r' if you wna to resume an older one:\t"
     )

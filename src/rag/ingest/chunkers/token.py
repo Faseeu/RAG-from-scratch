@@ -25,7 +25,12 @@
 
 #         i += step
 #     return chunks
+import re
 from dataclasses import dataclass
+
+from chonkie import TokenChunker
+
+from rag.config import settings
 
 
 @dataclass
@@ -38,12 +43,6 @@ class ChunkPayload:
     confidence: float
     chunk_index: int
 
-
-import re
-
-from chonkie import TokenChunker
-
-from rag.config import settings
 
 chunker = TokenChunker(
     tokenizer="gpt2",

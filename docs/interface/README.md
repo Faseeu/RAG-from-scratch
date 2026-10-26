@@ -4,8 +4,7 @@ See [FINISHING_PLAN.md](FINISHING_PLAN.md) for the current implementation
 checklist, community-only Jev policy, model reuse rules and stopping criteria.
 The checklist explicitly separates completed scaffolding from pending behavior.
 
-Nothing here is connected to existing code. No adapters, conversions, ingestion
-algorithm, provider calls, or runtime pipeline integrations are implemented by this package.
+These contracts and boundary models remain scaffolding; they do not orchestrate or alter the active ingestion and retrieval pipeline. The live Groq adapter accepts both its historical string prompt and a `GenerationRequest`, but the rest of the new contract conversions are not wired into the pipeline.
 
 - `boundary.py`: Pydantic models for external inputs and outputs.
 - `data.py`: dataclasses for internal function-to-function data.
@@ -17,11 +16,11 @@ application functions → dataclass → Pydantic serialization → external serv
 Conversions are deliberately not implemented. Primitive results such as bool
 and None need no wrapper. Lists contain internal dataclasses.
 
-`AIClient.generate` keeps the existing operation name, but uses a dataclass
-request/result. A future Groq adapter can delegate to the current
-`GroqClient.generate(request.user_prompt)` and wrap its result. The existing
-class is **not** changed or automatically compatible with this new contract.
-Model, token limit and structured-output schema remain adapter configuration.
+`AIClient.generate` describes a dataclass request/result. `GroqClient.generate`
+accepts either a raw prompt or `GenerationRequest`, preserving the CLI's string
+call and raw-text response. It does not yet wrap responses in `GenerationResult`,
+so the typed port is not fully integrated into the main pipeline. Model, token
+limit and structured-output schema remain adapter configuration.
 
 ## Blind spots / decisions before implementation
 
@@ -76,11 +75,10 @@ per-function variants. Existing runtime models are not migrated by this package.
 
 ## Compatibility with main's interfaces
 
-`interface/` owns the definitions. `interfaces/db.py` is a compatibility re-export,
-not a second implementation; existing plural-package imports continue to work.
-`interface/db.py` preserves main's original scaffold signatures and fixes the
-abstract-class instantiation in its type annotations. Neither scaffold is wired
-into the live pipeline.
+`src/rag/interface/` is the single canonical package for these contracts.
+`src/rag/interface/db.py` preserves main's original legacy scaffold signatures;
+`contracts.py` and `data.py` contain the newer typed ports. The legacy scaffold
+is not wired into the live retrieval or ingestion flow.
 
 The legacy DB uses `connect/ingest/retrieve`, whereas `contracts.VectorDB` exposes
 collection management, upsert, search and scroll. Likewise, the legacy boundary
@@ -95,9 +93,8 @@ Offline checks (with Pydantic 2, pydantic-settings, requests, python-dotenv and
 groq installed; no models/services required):
 
 ```sh
-python -m unittest discover -s interface/tests -v
-python -m unittest discover -s experimental/jev/tests -v
-python -m unittest discover -s tests -v
+PYTHONPATH=src python -m unittest discover -s tests -v
+PYTHONPATH=src python -m unittest discover -s experimental/jev/tests -v
 ```
 
 The merge-regression suite mocks providers, embeddings, PDF libraries and the

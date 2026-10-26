@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
 
 from rag.interface.contracts import AIClient
-from rag.interface.data import GenerationRequest,GenerationResult
+from rag.interface.data import GenerationRequest
 from rag.config import settings
 
 # import os
@@ -38,17 +38,20 @@ class GroqClient(AIClient):
 
     def generate(
         self,
-        request: GenerationRequest,
-    ):
+        request: GenerationRequest | str,
+    ) -> str | None:
+        # The CLI has historically passed a raw prompt string; accepting the typed
+        # request as well keeps the adapter compatible with its application port.
+        prompt = request if isinstance(request, str) else request.user_prompt
 
         max_retries = 3
-        for i in range(max_retries):
+        for _ in range(max_retries):
             try:
                 if self.schema is not None:
                     response = self.client.chat.completions.create(
                         model=self.model,
                         max_tokens=self.max_tokens,
-                        messages=[{"role": "user", "content": GenerationRequest.user_prompt}],
+                        messages=[{"role": "user", "content": prompt}],
                         stream=self.stream,
                         response_format={
                             "type": "json_schema",
@@ -66,7 +69,7 @@ class GroqClient(AIClient):
                         model=self.model,
                         max_tokens=self.max_tokens,
                         stream=self.stream,
-                        messages=[{"role": "user", "content": GenerationRequest.user_prompt}],
+                        messages=[{"role": "user", "content": prompt}],
                     )
                 if self.stream is True:
                     pieces = []

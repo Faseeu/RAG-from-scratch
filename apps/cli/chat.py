@@ -80,7 +80,7 @@ def main():
         if (
             user_query == ""
             or user_query == " "
-            or user_query == None
+            or user_query is None
             or not user_query.strip()
         ):
             continue
