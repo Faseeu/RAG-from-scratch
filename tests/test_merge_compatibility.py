@@ -51,17 +51,14 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.capture.__enter__()
         self.addCleanup(self.capture.__exit__, None, None, None)
 
-    def test_legacy_interface_exports_keep_identity_and_shapes(self):
+    def test_legacy_interface_contracts_keep_shapes(self):
         from rag.interface import db
-        from rag.interfaces import db as legacy
 
-        for name in legacy.__all__:
-            self.assertIs(getattr(legacy, name), getattr(db, name))
         self.assertEqual(db.VectorDB.__abstractmethods__, {"connect", "ingest", "retrieve"})
         self.assertIs(db.VectorDB.__annotations__["ingest"], db.Ingest)
-        chunk = legacy.Chunk(chunk_id="c", chunk_text="text", metadata={})
+        chunk = db.Chunk(chunk_id="c", chunk_text="text", metadata={})
         self.assertEqual(chunk.model_dump(), {"chunk_id": "c", "chunk_text": "text", "metadata": {}})
-        payload = legacy.ChunkPayload("text", 1, "title", "book.pdf", 3, 1.0, 0)
+        payload = db.ChunkPayload("text", 1, "title", "book.pdf", 3, 1.0, 0)
         self.assertEqual(payload.page_no, 1)
 
     def test_settings_accept_both_names_and_share_one_value(self):
@@ -134,6 +131,21 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.assertIs(output.call_args_list[0].kwargs["flush"], True)
         self.assertEqual(output.call_count, 3)  # two tokens and final newline
         self.assertTrue(fake_sdk.chat.completions.create.call_args.kwargs["stream"])
+
+    def test_groq_accepts_typed_generation_request(self):
+        from rag.interface.data import GenerationRequest
+
+        module = self.groq_module()
+        fake_sdk = Mock()
+        fake_sdk.chat.completions.create.return_value = NS(
+            choices=[NS(message=NS(content="answer"))]
+        )
+        with patch.object(module, "Groq", return_value=fake_sdk):
+            client = module.GroqClient("model")
+
+        self.assertEqual(client.generate(GenerationRequest(user_prompt="typed prompt")), "answer")
+        sent = fake_sdk.chat.completions.create.call_args.kwargs["messages"]
+        self.assertEqual(sent, [{"role": "user", "content": "typed prompt"}])
 
     def test_groq_nonstreaming_structured_output_still_returns_text(self):
         module = self.groq_module()

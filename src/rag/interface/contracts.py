@@ -64,7 +64,7 @@ class AIClient(ABC):
 
     @abstractmethod
     def generate(self, request: GenerationRequest) -> GenerationResult:
-        """A future Groq adapter can delegate request.user_prompt to generate."""
+        """Generate a result for the supplied internal request."""
         ...
 
 
