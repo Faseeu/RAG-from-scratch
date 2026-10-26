@@ -12,8 +12,8 @@ from experimental.jev.community import CommunityJevClient
 from experimental.jev.errors import JevHTTPError, JevResponseError, JevTransportError
 from experimental.jev.official import OfficialJevClient
 from experimental.jev.openrouter import OpenRouterJevClient
-from interface.jev.client import JevClient
-from interface.jev.data import ChoiceQuestion, Evaluation, NoulQuestion, ScoreQuestion
+from rag.interface.jev.client import JevClient
+from rag.interface.jev.data import ChoiceQuestion, Evaluation, NoulQuestion, ScoreQuestion
 
 PROVIDERS = (
     (OfficialJevClient, 'https://api.typesafe.ai/v1/systemone', 'jev-latest'),

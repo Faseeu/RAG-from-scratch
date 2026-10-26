@@ -1,0 +1,71 @@
+from rag.providers.llm.groqclient import GroqClient
+from rag.providers.llm.queryschema import QueryStructures
+from rag.config import settings
+
+# from dotenv import load_dotenv
+# import os
+
+# load_dotenv()  # reads .env file and loads all variables
+
+# API_KEY = os.getenv("GROQ_API_KEY")
+
+rewriter = GroqClient(model=settings.router_llm_model, output_schema=QueryStructures)
+
+
+def query_rewriter(query: str, extra_instructions: str):
+    instructions = """
+    Create the query in 5 different versions
+    The goal is to diversify the query
+    Think of it like asking 5 different people to search for the same thing, each with a different mindset.
+    You're not changing what the user wants.
+    You're changing the lens
+    - Base/The given one
+    - Rephrase/Paraphrase:  Same question, different words (synonyms, different sentence structure)
+    - Broaden(Zoom out):    Make the query more general/high-level
+    - Narrow (zoom in):     Make the query more specific — add assumed detail
+    - Perspective shift:    Ask it as if from a different angle e.g. "what would the answer look like", or a related sub-topic/assumption
+
+    """
+
+    rewriter_prompt = f"""
+    Rewrite the given query to make it more suitable for
+    - RAG
+
+    Keep it concise.
+    Dont write any preamble.
+    Dont write anything besides the query
+    Never ever add any other sort of text or "```" around the query
+    Make sure to keep it concise.
+    Never add thngs like "Sure! Here's a rewritten version:"
+    No need for greetings or goodbyes or his hellos
+    Be cold and highly precise.
+    Never add anything unecessary.
+    Never write any preamble
+    Never write section dividers
+    Always only write the 5 queries as you are instructed
+    Nothing more than that
+    Here is the QUERY:
+    {query}
+    Very Important instructions:
+    {instructions}
+    {extra_instructions}
+
+    """
+
+    improved_query = rewriter.generate(rewriter_prompt)
+    # print(improved_query)
+    validate = QueryStructures.model_validate_json(improved_query)
+
+    return validate.query
+
+
+if __name__ == "__main__":
+    query = query_rewriter(
+        "Suggest me a new method to build a strong identity daily.",
+        "Optimize for BM25 and vector search together.",
+    )
+    print(query)
+    print(type(query))
+    print(len(query))
+    for q in query:
+        print(type(q), repr(q))

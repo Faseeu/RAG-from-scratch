@@ -1,0 +1,110 @@
+import json
+import string
+
+from rapidfuzz import fuzz, process
+
+from rag.utils.cosine_similarity import cosine_similarity
+from rag.providers.embeddings.embedding import embed
+from rag.query.guard.embed_cache_ingest import load
+from rag.query.guard.llmlayer import llm_call
+from rag.config import settings
+
+filename = settings.hashmap_store
+with open(filename, "r") as f:
+    hashmap = json.load(f)
+faq_entries = load()
+
+
+def preprocessor(query: str, history):
+    query = remove_punctuation(query)
+    simple = exact_match(query)
+    if simple is not None:
+        return simple
+    fuzzy = fuzzysearch(query)
+    if fuzzy is not None:
+        return fuzzy
+
+    print("🧠 Embedding query... ", end="", flush=True)
+    vector = vector_search(query)
+    if vector is not None:
+        return vector
+    print("\r✅ Query embedded!      ")
+    llm = llm_call(query, history=history)
+    if llm is not None:
+        return llm
+
+    return None
+
+
+def exact_match(query: str):
+
+    if query in hashmap:
+        return hashmap[query]
+    return None
+
+
+def fuzzysearch(query: str, threshold=60):
+
+    result = process.extractOne(query, hashmap.keys(), scorer=fuzz.ratio)
+    # sliced = [best for best, score, index in result if int(score) > threshold]
+    # print(f"RESULTS FROM FUZZY SEARCH: {result}\n Sliced: {sliced}")
+    # for best in sliced[0]
+    # greeting = hashmap[sliced[0]]
+    # return greeting
+    return hashmap[result[0]] if result[1] > threshold else None
+
+
+def vector_search(query: str, threshold=0.65, filename=settings.embed_cache_store):
+    query_embed = embed([query], "retrieval.query")[0]
+
+    similarity_scores: dict[int, float] = {}
+    # embedding = [comp["embedding"] for comp in data]
+
+    # print(query_embed)
+    # print(embedding)
+    for i, faq_entry in enumerate(faq_entries):
+        embedding = faq_entry["embedding"]
+        # print(type(embedding))
+        score = cosine_similarity(query_embed, embedding)
+        similarity_scores[i] = score
+
+    ranked = sorted(similarity_scores.items(), key=lambda x: x[1], reverse=True)
+    # print(ranked)
+    best_index, best_score = ranked[0]
+    if best_score > threshold:
+        return faq_entries[best_index]["answer"]
+    return None
+
+
+def remove_punctuation(text):
+    results = text.lower().strip()
+    # print(results)
+    #  METHOD 3
+    translation_table = str.maketrans("", "", string.punctuation)
+    results = results.translate(translation_table)
+    # METHOD 2 AND 3
+    # for char in string.punctuation: # COMMON LINE
+    #     # print("CHAR FROM PUNTUATION", char)
+    #     # for txt in results:
+    #     #     print("TXT FROM RESULTS", txt)
+    #     #     results = txt.replace(char, "")
+    #     #     final += results
+
+    #     #     print(final)
+    # METHOD 3
+    #     results = "".join(txt.replace(char, "") for txt in results)
+
+    # print(results)
+
+    return results.strip()
+
+
+if __name__ == "__main__":
+    print(preprocessor("yeah makes sense"))
+    query = "How to apply the 4 rules of behavior change. Can you explain from how the writer explained but better way"
+    query_search = preprocessor(query)
+
+    # queries = [query["query"] for query in data]
+    print(query_search)
+
+    # print(queries)
