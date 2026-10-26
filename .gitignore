@@ -78,3 +78,7 @@ data/*
 data/seed/*
 !data/seed/**
 THINKING.md
+
+# Generated project-analysis exports
+RAG-from-scratch_notebook.ipynb
+RAG-from-scratch_report.html
