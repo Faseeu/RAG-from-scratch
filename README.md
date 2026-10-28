@@ -15,9 +15,9 @@ Run `uv run rag-chat`, pick a collection, and every query walks this path:
    Simple queries ("hey", "who are you?") get answered here without ever hitting the full pipeline.
 2. **Contextualization** — `src/rag/query/contextualize.py`
    Rewrites the query into a standalone question using conversation memory, so follow-ups like *"and why does that happen?"* work.
-3. **Decomposition** — `src/rag/providers/llm/decomposer.py`
+3. **Decomposition** — `src/rag/adapters/llm/decomposer.py`
    Splits the query into independent sub-queries.
-4. **Dual query rewriting** — `src/rag/providers/llm/query_rewriter.py`
+4. **Dual query rewriting** — `src/rag/adapters/llm/query_rewriter.py`
    5 semantic rewrites for the vector search + 5 keyword-dense rewrites for BM25 — the two retrievers want *opposite* phrasings.
 5. **Hybrid retrieval** — `src/rag/retrieval/dense.py` + `src/rag/retrieval/sparse.py`
    Dense retrieval from Qdrant (Snowflake `arctic-embed-s`, 384-dim) plus BM25 lexical search over the corpus.
@@ -27,7 +27,7 @@ Run `uv run rag-chat`, pick a collection, and every query walks this path:
    `ms-marco-MiniLM-L-6-v2` re-scores the fused chunks and keeps the best.
 8. **Prompt building** — `src/rag/generation/prompt.py`
    Context chunks + recent conversation memory → final prompt.
-9. **Answer generation** — `src/rag/providers/llm/groqclient.py` + `src/rag/verify/answerschema.py`
+9. **Answer generation** — `src/rag/adapters/llm/groqclient.py` + `src/rag/verify/answerschema.py`
    Groq (`openai/gpt-oss-120b`) streams a **structured** answer (answer + citations), validated with Pydantic.
 10. **Citation verification** — `src/rag/verify/quote_score.py`
     Every cited quote is fuzzy-matched (rapidfuzz) against the chunk it claims to come from, and a score is printed — so hallucinated citations get flagged, not silently accepted.
@@ -50,7 +50,7 @@ src/rag/retrieval/        # dense, BM25, RRF fusion, reranking
 src/rag/generation/       # prompt assembly
 src/rag/verify/           # answer schema and citation checks
 src/rag/memory/           # session-based conversation memory
-src/rag/providers/        # embeddings, Groq, and vector-store adapters
+src/rag/adapters/        # embeddings, Groq, and vector-store adapters
 src/rag/interface/        # existing typed ports and contracts
 src/rag/utils/            # helpers: sanitize_name, cleanRAG
 experimental/             # experiments (jev evaluation clients)
@@ -117,7 +117,7 @@ Every tunable lives in `src/rag/config.py` and can be overridden from `.env` (py
 
 ## Notes
 
-- Earlier iterations (V1–V4) used a flat JSON vector store — that code lives on in `src/rag/providers/vectorstore/storage.py` and `src/rag/ingest/ingest.py`, and `src/rag/utils/cleanRAG.py` is a small maintenance script for it.
+- Earlier iterations (V1–V4) used a flat JSON vector store — that code lives on in `src/rag/adapters/vectorstore/storage.py` and `src/rag/ingest/ingest.py`, and `src/rag/utils/cleanRAG.py` is a small maintenance script for it.
 - Everything generated at runtime — `sessions/`, `qdrant_storage/`, `data/RAG.json`, `conversation_memory.json` — is gitignored on purpose; the repo only carries source and seed data.
 - Developer tasks: `just test`, `just lint`, `just fix`, and `just build` (requires `just` and `uv`).
 - CI runs the offline test suite, Ruff lint, and a wheel build on Python 3.12.

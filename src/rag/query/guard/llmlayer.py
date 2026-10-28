@@ -1,7 +1,7 @@
 # llmlayer.py
 from pydantic import BaseModel, ConfigDict
 
-from rag.providers.llm.groqclient import GroqClient
+from rag.adapters.llm.groqclient import GroqClient
 
 # from memory import ConversationMemory
 from rag.config import settings

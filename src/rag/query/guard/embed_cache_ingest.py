@@ -4,7 +4,7 @@ import os
 
 from dotenv import load_dotenv
 
-from rag.providers.embeddings.batch_embed import _batch_embed
+from rag.adapters.embeddings.batch_embed import _batch_embed
 from rag.config import settings
 
 load_dotenv()  # reads .env file and loads all variables

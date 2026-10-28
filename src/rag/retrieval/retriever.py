@@ -1,6 +1,6 @@
 from rag.utils.cosine_similarity import cosine_similarity
-from rag.providers.vectorstore.storage import load
-from rag.providers.embeddings.embedding import embed
+from rag.adapters.vectorstore.storage import load
+from rag.adapters.embeddings.embedding import embed
 from rag.config import settings
 
 

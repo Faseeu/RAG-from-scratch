@@ -3,7 +3,7 @@ import string
 # import BM25
 from rank_bm25 import BM25Okapi
 
-from rag.providers.vectorstore.storage import load
+from rag.adapters.vectorstore.storage import load
 from rag.retrieval.dense import get_corpus_from_qdrant
 from rag.config import settings
 

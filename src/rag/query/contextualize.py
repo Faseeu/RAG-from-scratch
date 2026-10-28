@@ -1,4 +1,4 @@
-from rag.providers.llm.groqclient import GroqClient
+from rag.adapters.llm.groqclient import GroqClient
 from rag.config import settings
 
 # from interface.
