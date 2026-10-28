@@ -1,5 +1,5 @@
-from rag.providers.llm.groqclient import GroqClient
-from rag.providers.llm.queryschema import QueryStructures
+from rag.adapters.llm.groqclient import GroqClient
+from rag.adapters.llm.queryschema import QueryStructures
 from rag.config import settings
 
 # from dotenv import load_dotenv

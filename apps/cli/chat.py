@@ -3,11 +3,11 @@ from rag.ingest.registry import collections_index
 
 # from core.retriever import retriever
 from rag.query.guard.preprocessor import preprocessor
-from rag.providers.llm.decomposer import query_decomposer
+from rag.adapters.llm.decomposer import query_decomposer
 
 # from core.ingest import ingest
-from rag.providers.llm.groqclient import GroqClient
-from rag.providers.llm.query_rewriter import query_rewriter
+from rag.adapters.llm.groqclient import GroqClient
+from rag.adapters.llm.query_rewriter import query_rewriter
 from rag.memory.conversation import MemTurn, resume_or_create_session
 from rag.generation.prompt import prompt_builder
 from rag.retrieval.dense import get_corpus_from_qdrant, retrieve

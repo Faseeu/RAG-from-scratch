@@ -4,7 +4,7 @@ import string
 from rapidfuzz import fuzz, process
 
 from rag.utils.cosine_similarity import cosine_similarity
-from rag.providers.embeddings.embedding import embed
+from rag.adapters.embeddings.embedding import embed
 from rag.query.guard.embed_cache_ingest import load
 from rag.query.guard.llmlayer import llm_call
 from rag.config import settings

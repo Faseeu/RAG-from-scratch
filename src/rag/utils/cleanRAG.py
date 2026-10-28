@@ -1,4 +1,4 @@
-from rag.providers.vectorstore.storage import load, store
+from rag.adapters.vectorstore.storage import load, store
 
 from rag.ingest.ingest import ingest
 

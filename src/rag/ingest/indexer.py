@@ -10,8 +10,8 @@ from rag.ingest.chunkers.token import token_chunk
 from rag.ingest.loaders.text import load_textfile
 from rag.ingest.loaders.pdf import PDFParser
 from rag.ingest.registry import Collection, collections_index
-from rag.providers.embeddings.batch_embed import _batch_embed
-from rag.providers.vectorstore.client import client
+from rag.adapters.embeddings.batch_embed import _batch_embed
+from rag.adapters.vectorstore.client import client
 from rag.config import settings
 from rag.utils.sanitize_name import sanitize_name
 

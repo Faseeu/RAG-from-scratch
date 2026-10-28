@@ -111,7 +111,7 @@ class MergeCompatibilityTests(unittest.TestCase):
         self.assertEqual(module.CollectionsIndex().catalog, [{"file_hash": "keep"}])
 
     def groq_module(self):
-        return load_file("src/rag/providers/llm/groqclient.py", {
+        return load_file("src/rag/adapters/llm/groqclient.py", {
             "rag.config": stub(settings=NS(max_tokens=100, stream_response=False)),
             "dotenv": stub(load_dotenv=Mock()),
         })
@@ -166,8 +166,8 @@ class MergeCompatibilityTests(unittest.TestCase):
         return load_file("src/rag/retrieval/dense.py", {
             "rag.config": stub(settings=NS(collection_name="docs", embedding_model="model", retrieval_top_k=5, retrieval_threshold=0.5)),
             "rag.ingest.registry": stub(collections_index=NS(catalog=catalog)),
-            "rag.providers.embeddings.embedding": stub(embed=self.embed),
-            "rag.providers.vectorstore.client": stub(client=self.db),
+            "rag.adapters.embeddings.embedding": stub(embed=self.embed),
+            "rag.adapters.vectorstore.client": stub(client=self.db),
         })
 
     def test_missing_embedding_model_is_a_clear_error_not_keyerror(self):
@@ -195,8 +195,8 @@ class MergeCompatibilityTests(unittest.TestCase):
         client = Mock()
         versions = ["original", "paraphrase", "broaden", "narrow", "perspective"]
         client.generate.return_value = json.dumps({"query": versions})
-        module = load_file("src/rag/providers/llm/query_rewriter.py", {
-            "rag.providers.llm.groqclient": stub(GroqClient=Mock(return_value=client)),
+        module = load_file("src/rag/adapters/llm/query_rewriter.py", {
+            "rag.adapters.llm.groqclient": stub(GroqClient=Mock(return_value=client)),
             "rag.config": stub(settings=NS(router_llm_model="model")),
         })
         self.assertEqual(module.query_rewriter("original", "use vector search"), versions)
@@ -238,9 +238,9 @@ class MergeCompatibilityTests(unittest.TestCase):
             "rag.query.contextualize": stub(contextualize_query=Mock(return_value="context query")),
             "rag.ingest.registry": stub(collections_index=NS(list_collections=Mock(return_value=["docs"]))),
             "rag.query.guard.preprocessor": stub(preprocessor=Mock(return_value=None)),
-            "rag.providers.llm.decomposer": stub(query_decomposer=Mock(return_value=["context query"])),
-            "rag.providers.llm.groqclient": stub(GroqClient=factory),
-            "rag.providers.llm.query_rewriter": stub(query_rewriter=Mock(return_value=["query"])),
+            "rag.adapters.llm.decomposer": stub(query_decomposer=Mock(return_value=["context query"])),
+            "rag.adapters.llm.groqclient": stub(GroqClient=factory),
+            "rag.adapters.llm.query_rewriter": stub(query_rewriter=Mock(return_value=["query"])),
             "rag.memory.conversation": stub(MemTurn=MemTurn, resume_or_create_session=Mock(return_value=memory)),
             "rag.generation.prompt": stub(prompt_builder=Mock(return_value="prompt")),
             "rag.retrieval.dense": stub(get_corpus_from_qdrant=Mock(return_value=["evidence"]), retrieve=Mock(return_value=[NS(text="evidence")])),
