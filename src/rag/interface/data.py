@@ -3,6 +3,12 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
+@dataclass
+class MemTurn:
+    question: str = ""
+    answer: str = ""
+    mem: dict = field(default_factory=dict)
+
 
 @dataclass
 class Query:

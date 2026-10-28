@@ -92,3 +92,5 @@ class EmbeddingClient(ABC):
     def embed(self, batch: EmbeddingBatch) -> list[Embedding]:
         """Return one indexed embedding per input text."""
         ...
+
+# class

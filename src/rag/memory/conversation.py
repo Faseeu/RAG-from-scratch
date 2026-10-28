@@ -1,69 +1,16 @@
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
-# def _read(filename):
-#     """Reads memory from file. Returns [] if file doesn't exist yet."""
-#     try:
-#         with open(filename, "r") as f:
-#             return json.load(f)
-#     except (FileNotFoundError, json.JSONDecodeError):
-#         return []
-
-
-# def conMemory(mode="store", memory=None, filename="conversation_memory.json"):
-#     if mode == "store":
-#         full_memory = _read(filename)  # step 1: get old memory
-#         full_memory.append(memory)  # step 2: add new turn
-#         with open(filename, "w") as f:
-#             json.dump(full_memory, f)  # step 3: save it all back
-#         # pprint("Memory has been saved!!")
-
-#     elif mode == "load":
-#         full_memory = _read(filename)
-#         # pprint(full_memory[:-5])
-#         return full_memory[-12:]
-#         # return full_memory
-
-
-
-
-# def sessions_index(
-#     session_id=None,
-#     session_name=None,
-#     mode="show",
-#     created_at=None,
-#     filename="sessions/sessions_index.json",
-# ):
-#     if created_at is None:
-#         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-#     if mode == "show":
-#         full_index = _read(filename)
-#         return full_index
-#     elif mode == "register":
-#         session = {
-#             "session_id": session_id,
-#             "session_name": session_name,
-#             "created_at": created_at,
-#         }
-#         full_index = _read(filename)  # step 1: get old memory
-#         full_index.append(session)  # step 2: add new turn
-#         with open(filename, "w") as f:
-#             json.dump(full_index, f)
-
-
-@dataclass
-class MemTurn:
-    question: str = ""
-    answer: str = ""
-    mem: dict = field(default_factory=dict)
-
+from src.rag.interface.data import MemTurn
 
 # @dataclass
-# class MemStructure:
-#     memories: list[MemTurn] = field(default_factory=list)
+# class MemTurn:
+#     question: str = ""
+#     answer: str = ""
+#     mem: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -74,8 +21,7 @@ class Session:
 
     @classmethod
     def create_new(cls, session_id: str | None = None, session_name: str | None = None):
-        if not session_name:
-            session_name = input("Enter a SESSION NAME:- \n")
+
         now = datetime.now()
 
         session_id = (
@@ -106,7 +52,7 @@ class ConversationMemory:
         self.last_N = last_N if last_n is None else last_n
 
         self.data_dir = data_dir
-        os.makedirs(self.data_dir, exist_ok=True)
+        self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.filename = f"{self.session.session_id}.json"
         self.filepath = Path(os.path.join(self.data_dir, self.filename))
