@@ -94,3 +94,14 @@ class EmbeddingClient(ABC):
         ...
 
 # class
+from typing import Protocol
+
+class HistoryStorage(Protocol):
+    def load_all(self, session_id: str) -> list[dict]:
+        """Should return every stored turn for this session.
+        Think: what should it return if nothing exists yet?"""
+        ...
+
+    def append_turn(self, session_id: str, turn: dict) -> None:
+        """Should save one new turn for this session."""
+        ...

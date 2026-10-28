@@ -1,7 +1,27 @@
 """Plain dataclasses for data passed between application functions."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Literal
+
+
+@dataclass(frozen=True)
+class Session:
+    """A pure value object. No I/O, no input(), nothing but facts."""
+
+    session_id: str
+    session_name: str
+    created_at: str
+
+    @classmethod
+    def create_new(cls, session_name: str, session_id: str | None = None) -> "Session":
+        now = datetime.now()
+        if session_id is None:
+            session_id = f"{now.strftime('%Y%m%d_%H%M%S')}_{session_name}"
+        return cls(session_id=session_id, session_name=session_name, created_at=now.isoformat())
+
 
 @dataclass
 class MemTurn:

@@ -1,40 +1,9 @@
 import json
 import os
-from dataclasses import asdict, dataclass
-from datetime import datetime
+from dataclasses import asdict
 from pathlib import Path
 
-from src.rag.interface.data import MemTurn
-
-# @dataclass
-# class MemTurn:
-#     question: str = ""
-#     answer: str = ""
-#     mem: dict = field(default_factory=dict)
-
-
-@dataclass
-class Session:
-    session_id: str
-    session_name: str
-    created_at: str
-
-    @classmethod
-    def create_new(cls, session_id: str | None = None, session_name: str | None = None):
-
-        now = datetime.now()
-
-        session_id = (
-            (f"{now.strftime('%Y%m%d_%H%M%S')}_{session_name}")
-            if session_id is None
-            else session_id
-        )
-
-        return cls(
-            session_id=session_id,
-            session_name=session_name,
-            created_at=now.strftime("%Y-%m-%dT%H:%M:%S.%f"),
-        )
+from src.rag.interface.data import MemTurn, Session
 
 
 class ConversationMemory:
