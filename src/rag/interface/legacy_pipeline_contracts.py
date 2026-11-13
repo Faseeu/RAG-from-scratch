@@ -1,9 +1,8 @@
-"""Compatibility contracts brought forward from main's ``interfaces.db``.
+"""Legacy pipeline contracts retained for compatibility with the original scaffold.
 
-Definitions live only in interface/. The plural package re-exports these names.
-These legacy contracts are not aliases to contracts.VectorDB or data.Chunk:
-main's method signatures and payload fields differ. Keep them import-compatible
-until their callers deliberately migrate; do not silently change their shape.
+These contracts are not aliases to contracts.VectorDB or internal_models.Chunk:
+their method signatures and payload fields differ. Keep their shapes stable until
+callers deliberately migrate; do not silently change them.
 """
 
 from abc import ABC, abstractmethod

@@ -5,6 +5,8 @@ from typing import Literal
 
 @dataclass
 class MemTurn:
+    """A stored user question and assistant answer in conversation memory."""
+
     question: str = ""
     answer: str = ""
     mem: dict = field(default_factory=dict)

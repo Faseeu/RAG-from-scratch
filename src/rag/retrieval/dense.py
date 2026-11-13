@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
-from rag.ingest.registry import collections_index
-from rag.adapters.embeddings.embedding import embed
-from rag.adapters.vectorstore.client import client
+from rag.ingest.collection_registry import collections_index
+from rag.adapters.embeddings.embedding_client import embed
+from rag.adapters.vectorstore.qdrant_client import client
 from rag.config import settings
 from rag.utils.sanitize_name import sanitize_name
 

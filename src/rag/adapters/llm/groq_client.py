@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from groq import APIConnectionError, APIStatusError, Groq, RateLimitError
 
 from rag.interface.contracts import AIClient
-from rag.interface.data import GenerationRequest
+from rag.interface.internal_models import GenerationRequest
 from rag.config import settings
 
 # import os

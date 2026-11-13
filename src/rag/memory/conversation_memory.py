@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 
-from src.rag.interface.data import MemTurn
+from rag.interface.internal_models import MemTurn
 
 # @dataclass
 # class MemTurn:

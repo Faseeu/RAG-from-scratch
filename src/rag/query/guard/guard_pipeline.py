@@ -4,9 +4,9 @@ import string
 from rapidfuzz import fuzz, process
 
 from rag.utils.cosine_similarity import cosine_similarity
-from rag.adapters.embeddings.embedding import embed
-from rag.query.guard.embed_cache_ingest import load
-from rag.query.guard.llmlayer import llm_call
+from rag.adapters.embeddings.embedding_client import embed
+from rag.query.guard.faq_cache_ingest import load
+from rag.query.guard.llm_guard import llm_call
 from rag.config import settings
 
 filename = settings.hashmap_store

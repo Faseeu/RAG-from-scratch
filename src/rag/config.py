@@ -84,8 +84,8 @@ class Settings(BaseSettings):
         self.RAG_text_filename = value
 
     # Preprocessor Parameters
-    embed_cache_store: str = "data/faq_enteries.json"
-    hashmap_store: str = "data/basic_greets.json"
+    embed_cache_store: str = "data/faq_entries.json"
+    hashmap_store: str = "data/greeting_responses.json"
 
 
 

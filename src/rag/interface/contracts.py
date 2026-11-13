@@ -6,7 +6,7 @@ payloads and conversion. Provider configuration belongs to concrete clients.
 
 from abc import ABC, abstractmethod
 
-from .data import (
+from .internal_models import (
     Chunk,
     CollectionRef,
     CollectionSpec,

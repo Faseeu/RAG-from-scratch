@@ -3,15 +3,15 @@ import os
 import uuid
 from dataclasses import asdict
 
-from rag.ingest.chunkers.text import split_into_chunks
+from rag.ingest.chunkers.text_chunker import split_into_chunks
 from qdrant_client import models
 
-from rag.ingest.chunkers.token import token_chunk
-from rag.ingest.loaders.text import load_textfile
-from rag.ingest.loaders.pdf import PDFParser
-from rag.ingest.registry import Collection, collections_index
-from rag.adapters.embeddings.batch_embed import _batch_embed
-from rag.adapters.vectorstore.client import client
+from rag.ingest.chunkers.token_chunker import token_chunk
+from rag.ingest.loaders.text_loader import load_textfile
+from rag.ingest.loaders.pdf_loader import PDFParser
+from rag.ingest.collection_registry import Collection, collections_index
+from rag.adapters.embeddings.batch_embedding import _batch_embed
+from rag.adapters.vectorstore.qdrant_client import client
 from rag.config import settings
 from rag.utils.sanitize_name import sanitize_name
 

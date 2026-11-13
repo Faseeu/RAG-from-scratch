@@ -1,6 +1,6 @@
-from rag.adapters.vectorstore.storage import load, store
+from rag.adapters.vectorstore.json_store import load, store
 
-from rag.ingest.ingest import ingest
+from rag.ingest.legacy_json_ingest import ingest
 
 ingest()
 data = load()
