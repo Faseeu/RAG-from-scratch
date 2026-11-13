@@ -165,6 +165,18 @@ class PipelineRegressionTests(unittest.TestCase):
         self.assertIn("wsg", greetings)
         self.assertTrue(faq_entries)
 
+    def test_session_value_and_sessions_index_round_trip(self):
+        from rag.interface.internal_models import Session
+        from rag.memory.session import SessionsIndex
+
+        session = Session.create_new()
+        index = SessionsIndex(data_dir=Path("sessions"))
+        index.register(session)
+
+        self.assertEqual(index.show(), [session])
+        self.assertIsInstance(session.session_id, str)
+        self.assertIsInstance(session.created_at, str)
+
     def test_memory_both_window_names_and_persistence(self):
         module = load_file("src/rag/memory/conversation_memory.py")
         session = module.Session("s", "test", "2026-10-11")

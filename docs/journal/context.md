@@ -12,7 +12,8 @@
 - `src/rag/ingest/`: active Qdrant indexer, loaders, chunkers, and `collection_registry.py`.
 - `src/rag/retrieval/`: active `dense.py`, `bm25_retriever.py`, `rrf_fusion.py`, and `rerank.py`. The user explicitly wants `rerank.py` to keep its name.
 - `src/rag/query/guard/`: `guard_pipeline.py`, `faq_cache_ingest.py`, and `llm_guard.py`.
-- `src/rag/memory/conversation_memory.py`: conversation/session memory.
+- `src/rag/memory/conversation_memory.py`: conversation history and interactive resume/create flow.
+- `src/rag/memory/session.py`: persistent session index; `Session` itself is an internal value model.
 - `src/rag/verify/`: `answer_schema.py`, `llm_judge.py`, and `citation_quote_match.py`.
 - `data/greeting_responses.json`: exact/fuzzy greeting response map; `data/faq_entries.json`: cached FAQ text and embeddings.
 - `experimental/qdrant_smoke.py`: manual Qdrant scratch check; not part of pytest discovery.
@@ -26,7 +27,7 @@ The greeting map currently has 94 normalized responses, including 11 newer casua
 
 ### Latest local validation
 
-Most recent checks on the active work: Ruff passed; pytest reported 30 passed and 111 subtests passed; compilation passed. These checks ran under Python 3.11, while the project declares Python 3.12+.
+Most recent checks on the active work: Ruff passed; pytest reported 31 passed and 113 subtests passed; both unittest discovery suites and compilation passed. These checks ran under Python 3.11, while the project declares Python 3.12+.
 
 ### Naming note
 
