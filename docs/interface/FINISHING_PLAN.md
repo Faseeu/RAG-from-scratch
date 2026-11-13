@@ -160,3 +160,85 @@ Out of scope: universal model gateway, Rust/Go rewrite, GraphRAG, autonomous
 agents, Kubernetes, commercial multi-tenancy, endless provider/model comparisons
 and abstractions without consumers. Significant bug fixes are still appropriate
 once the feature scope is frozen.
+
+---
+
+# RAG-From-Scratch: Feature & Refactoring Roadmap
+
+This phased roadmap expands the implementation plan above with explicit
+stabilization, reliability, quality-control, and capability milestones. Items
+are proposals until implemented and validated; a checkbox is not a claim about
+current behavior.
+
+## Phase 1: Stabilization & Engine Extraction (Reaching “Epic”)
+
+These features separate the core RAG logic from the user interface, making it a
+true backend engine.
+
+- [ ] **Remove Compatibility Shims:** Delete duplicate aliases (e.g.,
+  `rag_filename` vs `RAG_text_filename`, dual `generate()` input types) to
+  enforce one clear standard.
+- [ ] **Lazy Loading Initialization:** Stop loading embedding models and LLM
+  clients at import time. Move initialization to a dedicated startup function
+  or lazy loaders.
+- [ ] **Headless Engine Extraction:** Extract the core RAG query flow into
+  `rag.engine.run_query()`.
+- [ ] **CLI Isolation:** Move all `input()`, `print()`, and session-selection
+  prompts strictly into the `apps/cli/` layer.
+- [ ] **Safe Ingestion Pipeline:** Refactor `Ingest` to separate construction
+  from execution, fix `zip` mismatch bugs, and prevent destructive collection
+  deletion on model changes.
+
+## Phase 2: Provenance & Reliability
+
+These features ensure data is trackable, debugging is easy, and the system
+never fakes a successful answer.
+
+- [ ] **End-to-End Provenance:** Carry Chunk IDs, retrieval scores, and source
+  metadata continuously through Dense/Sparse Search → RRF → Rerank → Prompting
+  → Citations.
+- [ ] **Strict Typing:** Enforce the use of `rag.interface` dataclasses (e.g.,
+  `Chunk`, `SearchHit`, `Answer`) instead of passing raw dictionaries between
+  stages.
+- [ ] **Explicit Failure Modes:** Implement custom exceptions (`NoEvidenceFound`,
+  `GenerationFailed`, `InvalidAnswerJSON`) so the CLI/API can gracefully handle
+  and report errors instead of hallucinating.
+- [ ] **Performance Tracing:** Add a `RAG_DEBUG=1` flag to log milliseconds taken
+  and hits returned for every single stage of the pipeline.
+
+## Phase 3: Measurement & Quality Control
+
+These features add the testing and evaluation safety nets required for a
+production-grade project.
+
+- [ ] **Golden Dataset:** Create `evals/golden/basic.jsonl` with 15–20
+  handwritten questions mapped to the exact Chunk IDs that contain the answer.
+- [ ] **Automated Evaluation Script:** Build a `just eval` command to run the
+  golden dataset and print `Recall@K` and `MRR` (Mean Reciprocal Rank) for the
+  retrieval stages.
+- [ ] **Boundary Tests:** Add a unit test that mechanically enforces architecture
+  rules (e.g., `src/rag` is strictly forbidden from importing `apps` or
+  `experimental`).
+- [ ] **CI/CD Pipeline:** Add GitHub Actions to run Ruff formatting, linting,
+  and `pytest` automatically on Python 3.12 for every push.
+
+## Phase 4: Advanced Capabilities (Reaching “Legendary”)
+
+These are the major new functional features that expand what the application
+can do.
+
+- [ ] **Streaming Generation:** Stream LLM tokens back through the engine to
+  the CLI in real time, rather than waiting for the entire generation to finish.
+- [ ] **FastAPI HTTP API:** Build `apps/api/main.py` to expose the headless
+  engine as a REST API (endpoints for `/chat`, `/ingest`, `/health`).
+- [ ] **Metadata Filtering:** Allow queries to include hard filters (e.g.,
+  “date > 2024”, “source == 'manual.pdf'”) passed down into the Qdrant retrieval
+  engine.
+- [ ] **Multi-Format Ingestion:** Expand the loaders to handle Markdown, HTML,
+  and Docx with proper structural parsing.
+- [ ] **Advanced Chunking Strategies:** Implement Semantic Chunking and
+  Layout-Aware Chunking, and use the Phase 3 Evaluation script to mathematically
+  prove which chunker performs best.
+- [ ] **Asynchronous Execution:** Convert the engine to use `asyncio` to allow
+  parallel dense/sparse retrieval and parallel LLM guard/rewrite calls for
+  massive speedups.
