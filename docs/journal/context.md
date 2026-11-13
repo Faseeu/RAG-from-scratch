@@ -1,4 +1,38 @@
-RAG AGENT FROM SCRATCH
+# RAG Agent From Scratch — Development Journal
+
+> Historical notes and working preferences. The dated notes below may use filenames that were current at the time. The snapshot here is the current file map; use the source tree and root README as the final authority.
+
+## Current repository snapshot — 2026-10-26
+
+### Current layout
+
+- `apps/cli/chat.py`: interactive entry point; keep its current query flow stable.
+- `src/rag/adapters/`: concrete integrations, including `llm/groq_client.py`, `llm/query_decomposer.py`, `embeddings/embedding_client.py`, `embeddings/batch_embedding.py`, and `vectorstore/qdrant_client.py`.
+- `src/rag/interface/`: boundary schemas, internal models, ports, and the retained `legacy_pipeline_contracts.py`.
+- `src/rag/ingest/`: active Qdrant indexer, loaders, chunkers, and `collection_registry.py`.
+- `src/rag/retrieval/`: active `dense.py`, `bm25_retriever.py`, `rrf_fusion.py`, and `rerank.py`. The user explicitly wants `rerank.py` to keep its name.
+- `src/rag/query/guard/`: `guard_pipeline.py`, `faq_cache_ingest.py`, and `llm_guard.py`.
+- `src/rag/memory/conversation_memory.py`: conversation history and interactive resume/create flow.
+- `src/rag/memory/session.py`: persistent session index; `Session` itself is an internal value model.
+- `src/rag/verify/`: `answer_schema.py`, `llm_judge.py`, and `citation_quote_match.py`.
+- `data/greeting_responses.json`: exact/fuzzy greeting response map; `data/faq_entries.json`: cached FAQ text and embeddings.
+- `experimental/qdrant_smoke.py`: manual Qdrant scratch check; not part of pytest discovery.
+- `src/rag/pipeline_skeleton.py` and the `legacy_json_*` files are placeholders or older JSON-store paths, not stages in the active Qdrant query path.
+
+### Greeting lookup and hashes are different things
+
+`guard_pipeline.py` normalizes greeting queries by lowercasing, trimming, and removing punctuation, then checks the greeting dictionary and fuzzy-matches its keys. The greeting map is not a custom cryptographic hash table; it is a normal Python dictionary. `indexer.py` separately computes a SHA-256 fingerprint of document bytes in 8 KiB chunks, returning the digest after reading the whole file. That fingerprint is for duplicate-ingestion detection and is unrelated to greetings.
+
+The greeting map currently has 94 normalized responses, including 11 newer casual/slang entries. The FAQ cache has 115 records with 384-dimensional embeddings, matching the configured embedding dimension. The test suite now covers greeting normalization/exact lookup, configured resource paths, and full-file SHA-256 hashing.
+
+### Latest local validation
+
+Most recent checks on the active work: Ruff passed; pytest reported 31 passed and 113 subtests passed; both unittest discovery suites and compilation passed. These checks ran under Python 3.11, while the project declares Python 3.12+.
+
+### Naming note
+
+The names in this snapshot supersede old paths mentioned in the historical entries below. Those older entries are left as a record of how the project evolved; don’t copy their paths into new code or documentation.
+
 READ THIS ENTIRE PROMPT BEFORE RESPONDING TO ANYTHING
 ═══════════════════════════════════════════════════════════════
 
@@ -1509,5 +1543,5 @@ INTERESTING THINGS ABOUT HIM (useful for future sessions)
 
 
 ═══════════════════════════════════════════════════════════════
-END OF CONTEXT — ASK WHICH V2 UPGRADE THEY WANT TO BUILD
+END OF HISTORICAL NOTES — CHECK THE CURRENT SNAPSHOT AND SOURCE TREE
 ═══════════════════════════════════════════════════════════════

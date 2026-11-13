@@ -1,10 +1,10 @@
-# embed_cache_ingest.py
+# faq_cache_ingest.py
 import json
 import os
 
 from dotenv import load_dotenv
 
-from rag.adapters.embeddings.batch_embed import _batch_embed
+from rag.adapters.embeddings.batch_embedding import _batch_embed
 from rag.config import settings
 
 load_dotenv()  # reads .env file and loads all variables

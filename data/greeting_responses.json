@@ -23,9 +23,7 @@
     "how r u": "I'm doing well, thanks for asking! How can I help you?",
     "hru": "I'm doing well, thanks for asking! How can I help you?",
     "whats up": "Not much! What can I help you with?",
-    "what's up": "Not much! What can I help you with?",
     "wsp": "Not much! What can I help you with?",
-    "how's it going": "Going well! What do you need help with?",
     "hows it going": "Going well! What do you need help with?",
     "thanks": "You're welcome!",
     "thank you": "You're welcome! Let me know if you need anything else.",
@@ -83,5 +81,16 @@
     "my bad": "No worries at all!",
     "welcome": "Glad to have you here!",
     "np": "No problem!",
-    "no problem": "No problem!"
+    "no problem": "No problem!",
+    "hey there": "Hey there! What can I help you with?",
+    "good to see you": "Good to see you too! What can I help with?",
+    "long time no see": "It has been a while! What can I help you with?",
+    "wsg": "What's good? What can I help you with?",
+    "wyd": "I'm here and ready to help. What's up?",
+    "ayo": "Ayo! What can I help you with?",
+    "whats poppin": "Hey! What's poppin? What can I help with?",
+    "sup fam": "Hey! What can I help you with?",
+    "yo whats up": "Yo! What can I help you with?",
+    "good morning everyone": "Good morning! What can I help everyone with today?",
+    "good evening everyone": "Good evening! What can I help you with?"
 }

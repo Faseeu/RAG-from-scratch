@@ -5,8 +5,9 @@ payloads and conversion. Provider configuration belongs to concrete clients.
 """
 
 from abc import ABC, abstractmethod
+from typing import Protocol
 
-from .data import (
+from .internal_models import (
     Chunk,
     CollectionRef,
     CollectionSpec,
@@ -94,9 +95,10 @@ class EmbeddingClient(ABC):
         ...
 
 # class
-from typing import Protocol
 
 class HistoryStorage(Protocol):
+    """Port for loading and appending a session's persisted conversation turns."""
+
     def load_all(self, session_id: str) -> list[dict]:
         """Should return every stored turn for this session.
         Think: what should it return if nothing exists yet?"""

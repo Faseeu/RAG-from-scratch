@@ -1,4 +1,4 @@
-from rag.adapters.embeddings.embedding import embed
+from rag.adapters.embeddings.embedding_client import embed
 from rag.config import settings
 
 

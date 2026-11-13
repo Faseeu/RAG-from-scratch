@@ -6,7 +6,7 @@ from dataclasses import is_dataclass
 
 from pydantic import BaseModel, ValidationError
 
-from rag.interface import boundary, composition, contracts, data
+from rag.interface import boundary, contracts, ingest_dependencies, internal_models
 from rag.interface.jev import boundary as jev_boundary
 from rag.interface.jev import client as jev_client
 from rag.interface.jev import data as jev_data
@@ -36,16 +36,16 @@ class ContractTests(unittest.TestCase):
         self.assertEqual(b.metadata, {})
 
     def test_canonical_chunk_is_reused_internally(self):
-        chunk = data.Chunk('c', 'd', 'Evidence', {'source': 'book.pdf'})
-        hit = data.SearchHit(chunk, 0.9)
-        embedded = data.EmbeddedChunk(chunk, data.Embedding(0, [0.1], 'model'))
+        chunk = internal_models.Chunk('c', 'd', 'Evidence', {'source': 'book.pdf'})
+        hit = internal_models.SearchHit(chunk, 0.9)
+        embedded = internal_models.EmbeddedChunk(chunk, internal_models.Embedding(0, [0.1], 'model'))
         self.assertIs(hit.chunk, chunk)
         self.assertIs(embedded.chunk, chunk)
         self.assertTrue(is_dataclass(chunk))
         self.assertNotIsInstance(chunk, BaseModel)
 
     def test_public_classes_document_their_pipeline_role(self):
-        modules = (boundary, data, contracts, composition,
+        modules = (boundary, internal_models, contracts, ingest_dependencies,
                    jev_boundary, jev_data, jev_client)
         for module in modules:
             for name, cls in inspect.getmembers(module, inspect.isclass):

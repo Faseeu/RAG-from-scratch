@@ -136,14 +136,15 @@ Source: https://jev-ai.org/docs/billing/
 
 ## 6. Correctness prerequisites and failure policy
 
-- [ ] Review/fix _compute_hash returning inside its read loop.
+- [x] Verify `_compute_hash` hashes the complete file in chunks and returns only after EOF; add a regression test for multi-chunk files.
 - [ ] Review text-only chunk IDs for duplicate text across sources/pages.
 - [ ] Define explicit behavior for empty retrieval, failed generation and invalid
       citations. Invalid output must not silently become a verified answer.
 - [ ] Record parser/chunker, model, prompt and index/configuration versions.
 - [ ] Make failure paths testable offline, without provider credits.
 
-These existing-code fixes require deliberate implementation and tests; this
+The file-hash check is covered by an offline regression test. The remaining
+correctness items require deliberate implementation and tests; this
 contract/documentation pass does not silently apply them.
 
 ## Finish and stop

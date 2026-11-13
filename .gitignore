@@ -76,6 +76,8 @@ desktop.ini
 
 
 data/*
+!data/faq_entries.json
+!data/greeting_responses.json
 !data/seed/
 data/seed/*
 !data/seed/**

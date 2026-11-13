@@ -4,37 +4,38 @@
 
 A Retrieval-Augmented Generation agent built from the ground up — **no RAG frameworks**. No LangChain, no LlamaIndex. The hybrid retrieval, RRF fusion, reranking, query rewriting, guard layers, conversation memory, and citation verification are all written by hand, and every line is understood.
 
-![Main pipeline](docs/assets/Main_Flowchart.png)
+![Main pipeline](docs/assets/main_pipeline.png)
 
 ## The query pipeline (V5)
 
 Run `uv run rag-chat`, pick a collection, and every query walks this path:
 
-1. **Guard preprocessor (4 layers, cheap → expensive)** — `src/rag/query/guard/preprocessor.py`
+1. **Guard preprocessor (4 layers, cheap → expensive)** — `src/rag/query/guard/guard_pipeline.py`
    Exact-match greetings → fuzzy match → cached-FAQ vector search → small-LLM classifier.
+   Greeting keys are normalized and looked up in the Python dictionary at `data/greeting_responses.json`; this is separate from the SHA-256 document fingerprint used by ingestion. FAQ vectors are stored in `data/faq_entries.json`.
    Simple queries ("hey", "who are you?") get answered here without ever hitting the full pipeline.
-2. **Contextualization** — `src/rag/query/contextualize.py`
+2. **Contextualization** — `src/rag/query/query_contextualizer.py`
    Rewrites the query into a standalone question using conversation memory, so follow-ups like *"and why does that happen?"* work.
-3. **Decomposition** — `src/rag/adapters/llm/decomposer.py`
+3. **Decomposition** — `src/rag/adapters/llm/query_decomposer.py`
    Splits the query into independent sub-queries.
 4. **Dual query rewriting** — `src/rag/adapters/llm/query_rewriter.py`
    5 semantic rewrites for the vector search + 5 keyword-dense rewrites for BM25 — the two retrievers want *opposite* phrasings.
-5. **Hybrid retrieval** — `src/rag/retrieval/dense.py` + `src/rag/retrieval/sparse.py`
+5. **Hybrid retrieval** — `src/rag/retrieval/dense.py` + `src/rag/retrieval/bm25_retriever.py`
    Dense retrieval from Qdrant (Snowflake `arctic-embed-s`, 384-dim) plus BM25 lexical search over the corpus.
-6. **RRF fusion** — `src/rag/retrieval/fusion.py`
+6. **RRF fusion** — `src/rag/retrieval/rrf_fusion.py`
    Reciprocal-rank fusion merges both result lists into one ranked set.
 7. **Cross-encoder rerank** — `src/rag/retrieval/rerank.py`
    `ms-marco-MiniLM-L-6-v2` re-scores the fused chunks and keeps the best.
-8. **Prompt building** — `src/rag/generation/prompt.py`
+8. **Prompt building** — `src/rag/generation/prompt_builder.py`
    Context chunks + recent conversation memory → final prompt.
-9. **Answer generation** — `src/rag/adapters/llm/groqclient.py` + `src/rag/verify/answerschema.py`
+9. **Answer generation** — `src/rag/adapters/llm/groq_client.py` + `src/rag/verify/answer_schema.py`
    Groq (`openai/gpt-oss-120b`) streams a **structured** answer (answer + citations), validated with Pydantic.
-10. **Citation verification** — `src/rag/verify/quote_score.py`
+10. **Citation verification** — `src/rag/verify/citation_quote_match.py`
     Every cited quote is fuzzy-matched (rapidfuzz) against the chunk it claims to come from, and a score is printed — so hallucinated citations get flagged, not silently accepted.
 
 ## Ingestion
 
-![Ingestion flow](docs/assets/Ingest.png)
+![Ingestion flow](docs/assets/ingestion_flow.png)
 
 `src/rag/ingest/indexer.py` → PDF → markdown (`pymupdf4llm`) → token-aware chunking → batch embedding → a Qdrant collection with deterministic UUID5 ids and sanitized collection names.
 
@@ -43,7 +44,7 @@ Run `uv run rag-chat`, pick a collection, and every query walks this path:
 ```
 apps/cli/chat.py          # interactive chat entry point
 src/rag/config.py         # pydantic-settings: API keys, models, tunables
-src/rag/engine.py         # existing engine module
+src/rag/pipeline_skeleton.py         # unimplemented placeholder; not used by the live CLI
 src/rag/ingest/           # loaders, chunkers, indexing, collection registry
 src/rag/query/            # contextualization and guard preprocessing
 src/rag/retrieval/        # dense, BM25, RRF fusion, reranking
@@ -52,10 +53,10 @@ src/rag/verify/           # answer schema and citation checks
 src/rag/memory/           # session-based conversation memory
 src/rag/adapters/        # embeddings, Groq, and vector-store adapters
 src/rag/interface/        # existing typed ports and contracts
-src/rag/utils/            # helpers: sanitize_name, cleanRAG
+src/rag/utils/            # general helpers and legacy JSON maintenance
 experimental/             # experiments (jev evaluation clients)
 data/seed/                # committed sample corpus
-data/                     # runtime caches and registry
+data/                     # greeting/FAQ resources plus ignored runtime state
 docs/                     # assets, interface notes, learning journal
 tests/                    # compatibility and contract tests
 ```
@@ -117,7 +118,6 @@ Every tunable lives in `src/rag/config.py` and can be overridden from `.env` (py
 
 ## Notes
 
-- Earlier iterations (V1–V4) used a flat JSON vector store — that code lives on in `src/rag/adapters/vectorstore/storage.py` and `src/rag/ingest/ingest.py`, and `src/rag/utils/cleanRAG.py` is a small maintenance script for it.
-- Everything generated at runtime — `sessions/`, `qdrant_storage/`, `data/RAG.json`, `conversation_memory.json` — is gitignored on purpose; the repo only carries source and seed data.
-- Developer tasks: `just test`, `just lint`, `just fix`, and `just build` (requires `just` and `uv`).
-- CI runs the offline test suite, Ruff lint, and a wheel build on Python 3.12.
+- Earlier iterations (V1–V4) used a flat JSON vector store — that code lives on in `src/rag/adapters/vectorstore/json_store.py` and `src/rag/ingest/legacy_json_ingest.py`, and `src/rag/utils/normalize_legacy_json_chunks.py` is a small maintenance script for it.
+- Runtime state such as `sessions/`, Qdrant storage, `data/RAG.json`, and `data/settings.json` is gitignored. The greeting-response map, FAQ cache, and sample corpus are checked-in inputs.
+- Developer tasks: `just test`, `just lint`, `just fix`, and `just build` (requires `just` and `uv`). The test suite is designed to run offline with mocked providers.

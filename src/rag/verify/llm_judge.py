@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 
-from rag.adapters.llm.groqclient import GroqClient
+from rag.adapters.llm.groq_client import GroqClient
 
 
 class JudgeStructure(BaseModel):

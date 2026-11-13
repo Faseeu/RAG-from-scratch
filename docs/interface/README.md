@@ -7,9 +7,9 @@ The checklist explicitly separates completed scaffolding from pending behavior.
 These contracts and boundary models remain scaffolding; they do not orchestrate or alter the active ingestion and retrieval pipeline. The live Groq adapter accepts both its historical string prompt and a `GenerationRequest`, but the rest of the new contract conversions are not wired into the pipeline.
 
 - `boundary.py`: Pydantic models for external inputs and outputs.
-- `data.py`: dataclasses for internal function-to-function data.
+- `internal_models.py`: dataclasses for internal function-to-function data.
 - `contracts.py`: abstract vector DB, AI client, PDF loader, chunker and embedder.
-- `composition.py`: dependencies a future ingestion service can receive.
+- `ingest_dependencies.py`: dependencies a future ingestion service can receive.
 
 Intended flow: external payload → Pydantic validation → internal dataclass →
 application functions → dataclass → Pydantic serialization → external service.
@@ -65,7 +65,7 @@ requires separate approval.
 ## Canonical types and pipeline comments
 
 Class docstrings identify the producer/consumer stage and boundary. Reuse
-`data.Chunk` through retrieval, fusion, reranking and context assembly; use
+`internal_models.Chunk` through retrieval, fusion, reranking and context assembly; use
 `SearchHit` to associate a score, recording its meaning in the producing stage.
 `boundary.ChunkPayload` defines the common identity/text/metadata fields once
 for external vector reads and writes. The flat JSON field shapes are unchanged.
@@ -76,17 +76,17 @@ per-function variants. Existing runtime models are not migrated by this package.
 ## Compatibility with main's interfaces
 
 `src/rag/interface/` is the single canonical package for these contracts.
-`src/rag/interface/db.py` preserves main's original legacy scaffold signatures;
-`contracts.py` and `data.py` contain the newer typed ports. The legacy scaffold
+`src/rag/interface/legacy_pipeline_contracts.py` preserves main's original legacy scaffold signatures;
+`contracts.py` and `internal_models.py` contain the newer typed ports. The legacy scaffold
 is not wired into the live retrieval or ingestion flow.
 
 The legacy DB uses `connect/ingest/retrieve`, whereas `contracts.VectorDB` exposes
 collection management, upsert, search and scroll. Likewise, the legacy boundary
 chunk uses `chunk_text` without `document_id`, and its internal payload has explicit
 page/title/token fields. These are not equivalent to `boundary.ChunkPayload` or
-`data.Chunk`, so aliasing them would silently break their shapes. They remain
+`internal_models.Chunk`, so aliasing them would silently break their shapes. They remain
 compatibility contracts, not new per-stage variants. New code should use
-`contracts.py`, `data.py` and `boundary.py`; migrating legacy callers requires an
+`contracts.py`, `internal_models.py` and `boundary.py`; migrating legacy callers requires an
 explicit adapter decision.
 
 Offline checks (with Pydantic 2, pydantic-settings, requests, python-dotenv and
@@ -97,7 +97,7 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 PYTHONPATH=src python -m unittest discover -s experimental/jev/tests -v
 ```
 
-The merge-regression suite mocks providers, embeddings, PDF libraries and the
+The pipeline-regression suite mocks adapters, embeddings, PDF libraries and the
 reranker, and writes only to temporary directories. It checks main's retained
 behavior plus compatibility names and single-pass streaming display; it is not
 a live RAG quality evaluation.

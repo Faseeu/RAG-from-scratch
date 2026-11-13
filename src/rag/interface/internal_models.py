@@ -12,11 +12,11 @@ class Session:
     """A pure value object. No I/O, no input(), nothing but facts."""
 
     session_id: str
-    session_name: str
+    session_name: str | None
     created_at: str
 
     @classmethod
-    def create_new(cls, session_name: str, session_id: str | None = None) -> "Session":
+    def create_new(cls, session_name: str | None = None, session_id: str | None = None) -> "Session":
         now = datetime.now()
         if session_id is None:
             session_id = f"{now.strftime('%Y%m%d_%H%M%S')}_{session_name}"
@@ -25,6 +25,8 @@ class Session:
 
 @dataclass
 class MemTurn:
+    """A stored user question and assistant answer in conversation memory."""
+
     question: str = ""
     answer: str = ""
     mem: dict = field(default_factory=dict)

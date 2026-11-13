@@ -28,7 +28,7 @@ limit does not change which wallet the provider uses. No live calls were made.
 
 Billing checked 2026-10-11: https://jev-ai.org/docs/billing/
 
-See [the finishing plan](../../interface/FINISHING_PLAN.md) for the proposed
+See [the finishing plan](../../docs/interface/FINISHING_PLAN.md) for the proposed
 advisory grounding task, shared tracing, evaluation and budget checks (not yet
 implemented).
 

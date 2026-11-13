@@ -1,5 +1,5 @@
-from rag.adapters.llm.groqclient import GroqClient
-from rag.adapters.llm.queryschema import QueryStructures
+from rag.adapters.llm.groq_client import GroqClient
+from rag.adapters.llm.query_schema import QueryStructures
 from rag.config import settings
 
 decomposer = GroqClient(model=settings.router_llm_model, output_schema=QueryStructures)

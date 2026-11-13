@@ -2,13 +2,14 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from src.rag.interface.data import Session
+from rag.interface.internal_models import Session
 
 
 class SessionsIndex:
     def __init__(self, data_dir: str = "sessions"):
 
         self.filepath = Path(data_dir) / "sessions_index.json"
+        self.filepath.parent.mkdir(parents=True, exist_ok=True)
         # self.catalog: list[dict[str, str]] = []
 
     def register(self, session: Session):

@@ -3,7 +3,8 @@ import os
 from dataclasses import asdict
 from pathlib import Path
 
-from src.rag.interface.data import MemTurn, Session
+from rag.interface.internal_models import MemTurn, Session
+from rag.memory.session import SessionsIndex
 
 
 class ConversationMemory:
@@ -68,50 +69,6 @@ class ConversationMemory:
         s = self.session
         return f"{s.session_id}\n\n{s.session_name}\n\n{s.created_at}\n\n{self.filename}\n{self.filepath}"
 
-
-class SessionsIndex:
-    def __init__(self, data_dir: str = "sessions"):
-
-        self.filepath = Path(data_dir) / "sessions_index.json"
-        # self.catalog: list[dict[str, str]] = []
-
-    def register(self, session: Session):
-        # try:
-        sessions = self.show()
-        # if created_at is None:
-        #     created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-
-        # session = Session(
-        #     session_id=session_id,
-        #     session_name=session_name,
-        #     created_at=created_at,
-        # )
-
-        # existing_ids = [entry["session_id"] for entry in sessions]
-        existing_ids = [s.session_id for s in sessions]
-
-        if session.session_id in existing_ids:
-            print("Session already registered, skipping.")
-            return
-
-        sessions.append(session)
-        with open(self.filepath, "w") as f:
-            json.dump([asdict(s) for s in sessions], f)
-
-    # except ValueError as e:
-    #     raise e("This session is already registered in the catalog")
-
-    def show(self) -> list[Session]:
-        try:
-            if self.filepath.exists() is not True:
-                self.filepath.touch(exist_ok=True)
-
-            with open(self.filepath, "r") as f:
-                raw = json.load(f)
-                sessions = [Session(**entry) for entry in raw]
-                return sessions
-        except (FileNotFoundError, json.JSONDecodeError):
-            return []
 
 
 def resume_or_create_session():

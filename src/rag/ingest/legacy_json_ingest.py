@@ -1,7 +1,7 @@
-from rag.ingest.chunkers.text import split_into_chunks
-from rag.ingest.loaders.text import load_textfile
-from rag.adapters.vectorstore.storage import store
-from rag.adapters.embeddings.batch_embed import _batch_embed
+from rag.ingest.chunkers.text_chunker import split_into_chunks
+from rag.ingest.loaders.text_loader import load_textfile
+from rag.adapters.vectorstore.json_store import store
+from rag.adapters.embeddings.batch_embedding import _batch_embed
 from rag.config import settings
 
 
