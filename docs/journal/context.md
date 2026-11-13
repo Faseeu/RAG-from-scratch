@@ -29,6 +29,17 @@ The greeting map currently has 94 normalized responses, including 11 newer casua
 
 Most recent checks on the active work: Ruff passed; pytest reported 31 passed and 113 subtests passed; both unittest discovery suites and compilation passed. These checks ran under Python 3.11, while the project declares Python 3.12+.
 
+### Feature and refactoring roadmap
+
+The canonical phased roadmap is in [docs/interface/FINISHING_PLAN.md](../interface/FINISHING_PLAN.md), under **“RAG-From-Scratch: Feature & Refactoring Roadmap.”** Treat every unchecked item there as planned, not as existing behavior. The four phases are:
+
+1. **Stabilization & engine extraction:** remove compatibility shims, initialize models/clients lazily, extract `rag.engine.run_query()`, isolate CLI I/O, and make ingestion safe.
+2. **Provenance & reliability:** carry chunk/source/score identity end to end, use typed interface models, report explicit failures, and trace per-stage timing/results.
+3. **Measurement & quality control:** add a labeled golden dataset and Recall@K/MRR evaluation, architecture boundary tests, and Python 3.12 GitHub Actions CI.
+4. **Advanced capabilities:** add streaming, a FastAPI API, Qdrant metadata filters, Markdown/HTML/Docx ingestion, evaluated semantic/layout-aware chunking, and async execution.
+
+The detailed acceptance points and checklists live in the linked plan to avoid maintaining a second, potentially divergent copy here.
+
 ### Naming note
 
 The names in this snapshot supersede old paths mentioned in the historical entries below. Those older entries are left as a record of how the project evolved; don’t copy their paths into new code or documentation.
